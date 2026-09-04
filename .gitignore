@@ -12,3 +12,5 @@ backend/autoblog.db
 
 # OS
 .DS_Store
+.venv-pdf/
+autoblog-extension.zip
