@@ -1,6 +1,15 @@
 # 오토블로그 AI (AutoBlog AI)
 
-네이버 블로그 현장 후기를 **3분**에 작성하는 Chrome 확장 프로그램 + FastAPI 백엔드.
+네이버 블로그 현장 후기를 **3분**에 작성하는 Chrome 확장 + 모바일 웹 + FastAPI 백엔드.
+
+## 고객 이용 채널
+
+| 기기 | 방법 |
+|------|------|
+| 핸드폰·태블릿 | https://blog-chrometool.onrender.com/app/ |
+| PC 크롬 | `autoblog-extension.zip` 설치 (또는 `extension/` 로드) |
+
+둘 다 같은 라이선스 키·서버를 사용합니다.
 
 ## 빠른 시작 (로컬)
 
