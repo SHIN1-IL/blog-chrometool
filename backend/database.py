@@ -3,7 +3,30 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-DB_PATH = os.getenv("DATABASE_PATH", str(Path(__file__).parent / "autoblog.db"))
+_DEFAULT_DB = str(Path(__file__).parent / "autoblog.db")
+
+
+def _pick_db_path() -> str:
+    """Use DATABASE_PATH if writable; otherwise fall back (Render Free has no /var/data)."""
+    configured = os.getenv("DATABASE_PATH", _DEFAULT_DB)
+    path = Path(configured).expanduser()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        probe = path.parent / ".autoblog_write_test"
+        probe.write_text("ok")
+        probe.unlink(missing_ok=True)
+        return str(path)
+    except OSError:
+        fallback = Path(_DEFAULT_DB)
+        fallback.parent.mkdir(parents=True, exist_ok=True)
+        print(
+            f"[AutoBlog] DATABASE_PATH unusable ({path}); using fallback {fallback}",
+            flush=True,
+        )
+        return str(fallback)
+
+
+DB_PATH = _pick_db_path()
 
 
 def get_connection() -> sqlite3.Connection:

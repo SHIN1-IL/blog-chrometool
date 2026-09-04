@@ -15,9 +15,12 @@ services:
         sync: false
       - key: ADMIN_TOKEN
         sync: false
+      # Free plan: no persistent disk. Use local file (resets on redeploy/sleep).
+      # Paid + Disk: set to /var/data/autoblog.db and attach disk at /var/data
       - key: DATABASE_PATH
-        value: /var/data/autoblog.db
-    disk:
-      name: autoblog-data
-      mountPath: /var/data
-      sizeGB: 1
+        value: ./autoblog.db
+    # Uncomment when on a paid plan with persistent disk:
+    # disk:
+    #   name: autoblog-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
