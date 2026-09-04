@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>오토블로그 AI</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif;
+      padding: 12px;
+      margin: 0;
+      font-size: 13px;
+      color: #333;
+      background: #fff;
+    }
+    h2 {
+      font-size: 15px;
+      margin: 0 0 8px 0;
+      color: #1e293b;
+      border-bottom: 2px solid #03c75a;
+      padding-bottom: 6px;
+    }
+    .license-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 11px;
+      margin-bottom: 6px;
+      line-height: 1.5;
+    }
+    .status-inactive { background: #fee2e2; color: #dc2626; }
+    .status-active { background: #dcfce7; color: #15803d; }
+    .status-warning { background: #fef3c7; color: #b45309; }
+    .bank-info {
+      font-size: 12px;
+      color: #475569;
+      background: #fff;
+      border: 1px dashed #cbd5e1;
+      padding: 6px;
+      border-radius: 4px;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    .license-row {
+      display: flex;
+      gap: 4px;
+    }
+    .license-row input { flex: 1; }
+    .license-row button {
+      width: 70px;
+      margin-top: 0;
+      padding: 6px;
+    }
+    .form-group { margin-bottom: 10px; }
+    label { font-weight: 600; display: block; margin-bottom: 4px; }
+    input[type="text"], select, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+    .checkbox-group label {
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #03c75a;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    button.secondary { background: #475569; }
+    textarea#generatedText {
+      height: 200px;
+      resize: vertical;
+      margin-top: 6px;
+    }
+    .error-msg {
+      color: #dc2626;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+    .result-section {
+      margin-top: 14px;
+      display: none;
+    }
+    .result-section.visible { display: block; }
+    .model-tag {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🛠️ 오토블로그 3분 현장일기</h2>
+
+  <div class="license-card">
+    <div id="licenseBadge" class="status-badge status-inactive">라이선스 미등록</div>
+    <div class="license-row">
+      <input type="text" id="licenseKeyInput" value="DEMO-KEY" placeholder="라이선스 키 입력">
+      <button id="verifyKeyBtn">등록</button>
+    </div>
+    <div id="licenseError" class="error-msg"></div>
+    <div class="bank-info" id="bankNotice"></div>
+  </div>
+
+  <div class="form-group">
+    <label for="location">현장 위치 *</label>
+    <input type="text" id="location" placeholder="예: 서초구 반포동 아파트">
+  </div>
+
+  <div class="form-group">
+    <label for="weather">오늘의 날씨</label>
+    <select id="weather">
+      <option value="">선택 안 함</option>
+      <option value="☀️ 맑고 화창함">☀️ 맑고 화창함</option>
+      <option value="🌧️ 비가 주룩주룩 옴">🌧️ 비가 주룩주룩 옴</option>
+      <option value="❄️ 칼바람 부는 한파">❄️ 칼바람 부는 한파</option>
+      <option value="🌫️ 습하고 무더운 날씨">🌫️ 습하고 무더운 날씨</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="issue">해결할 문제 *</label>
+    <input type="text" id="issue" placeholder="예: 싱크대 하부장 누수 및 곰팡이 냄새">
+  </div>
+
+  <div class="form-group">
+    <label>현장 고충/돌발변수</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" value="배관 노후 심각"> 배관 노후</label>
+      <label><input type="checkbox" value="기름 슬러지 과다"> 슬러지 과다</label>
+      <label><input type="checkbox" value="작업 공간 협소"> 공간 협소</label>
+      <label><input type="checkbox" value="타업체 해결 실패"> 타사 실패건</label>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="solution">사용한 장비 / 해결 공정 *</label>
+    <input type="text" id="solution" placeholder="예: 배관 내시경 확인 후 주름관 교체 및 방수 실링">
+  </div>
+
+  <div class="form-group">
+    <label for="feeling">사장님 기분/소감</label>
+    <input type="text" id="feeling" placeholder="예: 사모님이 수고하셨다고 건네주신 박카스에 보람 느낌">
+  </div>
+
+  <div class="form-group">
+    <label for="tone">글 스타일 *</label>
+    <select id="tone">
+      <option value="친절하고 꼼꼼한 전문가형">친절한 전문가형</option>
+      <option value="현장감 넘치는 베테랑 일기형">베테랑 일기형</option>
+      <option value="원인과 해결 중심 정보전달형">원인-해결 정보전달형</option>
+    </select>
+  </div>
+
+  <button id="generateBtn" disabled>🚀 AI 블로그 글 생성하기</button>
+
+  <div id="resultSection" class="result-section">
+    <label for="generatedText">검수 및 수정</label>
+    <textarea id="generatedText" placeholder="AI가 작성한 초안이 여기에 표시됩니다."></textarea>
+    <div id="modelTag" class="model-tag"></div>
+    <button id="injectBtn">📝 네이버 에디터로 보내기</button>
+    <button id="copyBtn" class="secondary">📋 클립보드 복사 (안전용)</button>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="business.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

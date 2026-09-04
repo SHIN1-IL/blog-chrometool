@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment
+.env
+
+# SQLite
+backend/autoblog.db
+
+# OS
+.DS_Store

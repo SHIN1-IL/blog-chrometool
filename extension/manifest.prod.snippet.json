@@ -1,0 +1,7 @@
+# 프로덕션 manifest 예시 — host_permissions에 실제 URL 추가
+# extension/manifest.json 의 host_permissions를 아래처럼 수정하세요.
+
+"host_permissions": [
+  "*://blog.naver.com/*",
+  "https://your-app.onrender.com/*"
+]
