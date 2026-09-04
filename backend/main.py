@@ -1,13 +1,17 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import List
 
 import env_loader  # noqa: F401
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from ai_service import build_prompt, generate_content
 from admin_routes import router as admin_router
+from business_config import get_business_info
 from database import init_db
 from license_service import (
     check_license,
@@ -15,6 +19,8 @@ from license_service import (
     log_request,
     seed_demo_key,
 )
+
+WEB_DIR = Path(__file__).parent / "web"
 
 
 @asynccontextmanager
@@ -54,6 +60,16 @@ class GenerateRequest(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/api/business")
+def business():
+    return get_business_info()
+
+
+@app.get("/")
+def root():
+    return RedirectResponse(url="/app/")
 
 
 @app.post("/api/license/verify")
@@ -123,3 +139,6 @@ def generate_post(req: GenerateRequest):
         else:
             detail = "글 생성에 실패했습니다. 서버 터미널의 Gemini 로그를 확인해 주세요."
         raise HTTPException(status_code=500, detail=detail) from e
+
+
+app.mount("/app", StaticFiles(directory=str(WEB_DIR), html=True), name="web")

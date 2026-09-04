@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#03c75a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>오토블로그 AI — 사장님 현장 일기</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <h1>오토블로그 3분 현장일기</h1>
+    <p class="sub">핸드폰·태블릿·PC 어디서나 · 생성 후 네이버에 붙여넣기</p>
+  </header>
+
+  <section class="card" id="licenseCard">
+    <div id="licenseBadge" class="badge inactive">라이선스 미등록</div>
+    <div class="row">
+      <input type="text" id="licenseKey" placeholder="라이선스 키" autocomplete="off" />
+      <button type="button" id="verifyBtn" class="btn-sm">등록</button>
+    </div>
+    <p id="licenseError" class="error" hidden></p>
+    <div id="bankNotice" class="bank"></div>
+  </section>
+
+  <form id="genForm" class="card">
+    <label>
+      현장 위치 *
+      <input type="text" id="location" required placeholder="예: 서초구 반포동 아파트" />
+    </label>
+
+    <label>
+      오늘의 날씨
+      <select id="weather">
+        <option value="">선택 안 함</option>
+        <option value="☀️ 맑고 화창함">☀️ 맑고 화창함</option>
+        <option value="🌧️ 비가 주룩주룩 옴">🌧️ 비가 주룩주룩 옴</option>
+        <option value="❄️ 칼바람 부는 한파">❄️ 칼바람 부는 한파</option>
+        <option value="🌫️ 습하고 무더운 날씨">🌫️ 습하고 무더운 날씨</option>
+      </select>
+    </label>
+
+    <label>
+      해결할 문제 *
+      <input type="text" id="issue" required placeholder="예: 싱크대 하부장 누수 및 곰팡이 냄새" />
+    </label>
+
+    <fieldset>
+      <legend>현장 고충/돌발변수</legend>
+      <div class="checks">
+        <label><input type="checkbox" name="obstacle" value="배관 노후 심각" /> 배관 노후</label>
+        <label><input type="checkbox" name="obstacle" value="기름 슬러지 과다" /> 슬러지 과다</label>
+        <label><input type="checkbox" name="obstacle" value="작업 공간 협소" /> 공간 협소</label>
+        <label><input type="checkbox" name="obstacle" value="타업체 해결 실패" /> 타사 실패건</label>
+      </div>
+    </fieldset>
+
+    <label>
+      사용한 장비 / 해결 공정 *
+      <input type="text" id="solution" required placeholder="예: 배관 내시경 확인 후 주름관 교체" />
+    </label>
+
+    <label>
+      사장님 기분/소감
+      <input type="text" id="feeling" placeholder="예: 감사 인사에 보람을 느낌" />
+    </label>
+
+    <label>
+      글 스타일 *
+      <select id="tone" required>
+        <option value="친절하고 꼼꼼한 전문가형">친절한 전문가형</option>
+        <option value="현장감 넘치는 베테랑 일기형">베테랑 일기형</option>
+        <option value="원인과 해결 중심 정보전달형">원인-해결 정보전달형</option>
+      </select>
+    </label>
+
+    <button type="submit" id="generateBtn" class="btn-primary" disabled>AI 블로그 글 생성하기</button>
+    <p id="genError" class="error" hidden></p>
+    <p class="hint">※ 무료 서버는 첫 연결 시 30~60초 걸릴 수 있습니다.</p>
+  </form>
+
+  <section id="resultSection" class="card result" hidden>
+    <label for="generatedText">검수 및 수정</label>
+    <textarea id="generatedText" rows="14"></textarea>
+    <p id="modelTag" class="model"></p>
+    <button type="button" id="copyBtn" class="btn-primary">전체 복사 (네이버 앱에 붙여넣기)</button>
+    <p id="copyMsg" class="ok" hidden></p>
+  </section>
+
+  <footer class="footer">
+    <p>PC 크롬 확장도 사용 가능합니다. 관리자에게 zip을 요청하세요.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
