@@ -4,7 +4,8 @@ import os
 
 def get_business_info() -> dict:
     return {
-        "monthlyPrice": int(os.getenv("BUSINESS_MONTHLY_PRICE", "29000")),
+        "monthlyPrice": int(os.getenv("BUSINESS_MONTHLY_PRICE", "12900")),
+        "yearlyPrice": int(os.getenv("BUSINESS_YEARLY_PRICE", "129000")),
         "bankName": os.getenv("BUSINESS_BANK_NAME", "하나은행"),
         "accountNumber": os.getenv("BUSINESS_ACCOUNT_NUMBER", "365-910996-44807"),
         "accountHolder": os.getenv("BUSINESS_ACCOUNT_HOLDER", "신일"),

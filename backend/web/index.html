@@ -16,22 +16,53 @@
 
   <section class="card" id="licenseCard">
     <div id="licenseBadge" class="badge inactive">라이선스 미등록</div>
+    <div id="usageCard" class="usage-card" hidden>
+      <div class="usage-row"><span>플랜</span><strong id="usagePlan">—</strong></div>
+      <div class="usage-row"><span>구독 남은 기간</span><strong id="usageDays">—</strong></div>
+      <div class="usage-row"><span>오늘 남은 건수</span><strong id="usageDaily">—</strong></div>
+      <div class="usage-row"><span>이번 달 남은 건수</span><strong id="usageMonthly">—</strong></div>
+    </div>
     <div class="row">
       <input type="text" id="licenseKey" placeholder="라이선스 키" autocomplete="off" />
       <button type="button" id="verifyBtn" class="btn-sm">등록</button>
     </div>
     <p id="licenseError" class="error" hidden></p>
-    <div id="bankNotice" class="bank"></div>
+    <button type="button" id="bankToggle" class="btn-ghost">구독 안내</button>
+    <div id="bankNotice" class="bank" hidden></div>
   </section>
 
   <form id="genForm" class="card">
     <label>
-      현장 위치 *
+      업체 종류 *
+      <select id="bizType" required>
+        <option value="plumbing">1. 설비업체</option>
+        <option value="cleaning">2. 청소업체</option>
+        <option value="custom">3. 자가입력</option>
+      </select>
+    </label>
+
+    <label>
+      업체이름
+      <input type="text" id="companyName" placeholder="예: ○○설비 / ○○클리닝" />
+    </label>
+
+    <label>
+      주문내용
+      <input type="text" id="orderDetail" placeholder="예: 싱크대 하부 누수 수리" />
+    </label>
+
+    <label>
+      현장위치 *
       <input type="text" id="location" required placeholder="예: 서초구 반포동 아파트" />
     </label>
 
     <label>
-      오늘의 날씨
+      고객인상
+      <input type="text" id="customerImpression" placeholder="예: 아줌마, 아저씨, 가정주부, 젊은이, 아가씨" />
+    </label>
+
+    <label>
+      오늘날씨
       <select id="weather">
         <option value="">선택 안 함</option>
         <option value="☀️ 맑고 화창함">☀️ 맑고 화창함</option>
@@ -42,28 +73,38 @@
     </label>
 
     <label>
-      해결할 문제 *
+      해결사항 *
       <input type="text" id="issue" required placeholder="예: 싱크대 하부장 누수 및 곰팡이 냄새" />
     </label>
 
     <fieldset>
-      <legend>현장 고충/돌발변수</legend>
-      <div class="checks">
-        <label><input type="checkbox" name="obstacle" value="배관 노후 심각" /> 배관 노후</label>
-        <label><input type="checkbox" name="obstacle" value="기름 슬러지 과다" /> 슬러지 과다</label>
-        <label><input type="checkbox" name="obstacle" value="작업 공간 협소" /> 공간 협소</label>
-        <label><input type="checkbox" name="obstacle" value="타업체 해결 실패" /> 타사 실패건</label>
-      </div>
+      <legend>현장고충</legend>
+      <div class="checks" id="obstacleChecks"></div>
     </fieldset>
 
     <label>
-      사용한 장비 / 해결 공정 *
-      <input type="text" id="solution" required placeholder="예: 배관 내시경 확인 후 주름관 교체" />
+      해결과정 *
+      <input type="text" id="process" required placeholder="예: 내시경 확인 후 주름관 교체 및 방수 실링" />
     </label>
 
     <label>
-      사장님 기분/소감
+      사용장비
+      <input type="text" id="equipment" placeholder="예: 배관 내시경, 주름관" />
+    </label>
+
+    <label>
+      고객반응
+      <input type="text" id="customerReaction" placeholder="예: 감사 인사, 재방문 약속" />
+    </label>
+
+    <label>
+      완료기분
       <input type="text" id="feeling" placeholder="예: 감사 인사에 보람을 느낌" />
+    </label>
+
+    <label>
+      기타사항
+      <input type="text" id="extra" placeholder="예: 추가로 남길 메모" />
     </label>
 
     <label>

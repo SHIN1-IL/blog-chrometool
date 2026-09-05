@@ -6,27 +6,34 @@
 
 ## 1. 일일 운영 흐름
 
-### 1.1 유료 고객 (월 29,000원 / 30일)
+### 1.1 유료 고객 (월 12,900원 / 30일 · 연 129,000원 / 365일)
 
-1. 고객이 무통장 입금 (국민은행 123-45-678901, 예금주: 신일)
+1. 고객이 무통장 입금
 2. 카톡/문자로 입금자명·연락처 확인
 3. 라이선스 키 발급 (아래 CLI 또는 Admin API)
 4. 고객에게 키 문자/카톡 전달
-5. 고객이 Chrome 확장 Side Panel에서 [등록] 클릭
+5. 고객이 모바일 웹 또는 Chrome 확장에서 [등록] 클릭
 
 ```bash
 cd backend
-python3 manage.py create --plan paid --days 30 --note "홍길동 누수업"
+# 월간
+python3 manage.py create --plan paid --days 30 --note "홍길동 월결"
+# 연간
+python3 manage.py create --plan paid --days 365 --note "홍길동 연결"
 ```
 
-### 1.2 가족·지인 무료
+### 1.2 체험·지인·관리자
 
 ```bash
-# 1개월
-python3 manage.py create --plan family_free --months 1 --note "사촌 청소업"
+# 체험 (총 1건, 사용 즉시 종료) — 키 자동 생성
+python3 manage.py create --plan trial --days 30 --note "홍길동 체험"
 
-# 3 / 6 / 12개월
-python3 manage.py create --plan family_free --months 6 --note "아버지 간판업"
+# 지인 (일 1 · 월 30 · 1달 후 만료)
+python3 manage.py create --plan family_free --months 1 --note "사촌"
+
+# 관리자 고정키
+python3 manage.py seed
+# → ADMIN-TEST (일 3 · 월 무제한)
 ```
 
 ### 1.3 반값·부분 입금 (할인)
@@ -34,9 +41,9 @@ python3 manage.py create --plan family_free --months 6 --note "아버지 간판�
 MVP에서는 자동 계산 없이, 입금액에 비례해 연장 일수를 수동 적용합니다.
 
 ```
-연장 일수 = floor(입금액 ÷ 29,000 × 30)
+연장 일수 = floor(입금액 ÷ 12,900 × 30)
 
-예) 15,000원 입금 → 15일 연장
+예) 6,450원 입금 → 15일 연장
 python3 manage.py extend --key XXXX-XXXX-XXXX --days 15
 ```
 
@@ -52,8 +59,8 @@ python3 manage.py suspend --key XXXX-XXXX-XXXX
 # 재활성화
 python3 manage.py activate --key XXXX-XXXX-XXXX
 
-# VIP 한도 상향 (일 20건)
-python3 manage.py set-limit --key XXXX-XXXX-XXXX --daily 20 --monthly 300
+# VIP 한도 상향 (일 5건)
+python3 manage.py set-limit --key XXXX-XXXX-XXXX --daily 5 --monthly 120
 
 # 전체 목록
 python3 manage.py list
@@ -66,11 +73,12 @@ python3 manage.py show --key XXXX-XXXX-XXXX
 
 ## 2. 사용량 한도 (기본값)
 
-| 플랜 | 일일 | 월간 |
-|------|------|------|
-| paid | 10건 | 200건 |
-| family_free | 10건 | 150건 |
-| demo (DEMO-KEY) | 3건 | 10건 |
+| 플랜 | 코드 | 일일 | 월간 | 비고 |
+|------|------|------|------|------|
+| 체험 | trial | 1 | 1 | **1건 사용 즉시 종료** |
+| 지인 | family_free | 1 | 30 | 발급 후 1달 만료 |
+| 유료 | paid | 3 | 90 | 월 12,900 / 연 129,000 |
+| 관리자 | admin_test | 3 | 무제한 | 고정키 `ADMIN-TEST` |
 
 한도는 **백엔드에서만** 강제됩니다. 운영자가 `set-limit`으로 개별 조정 가능합니다.
 

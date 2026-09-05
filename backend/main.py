@@ -17,7 +17,9 @@ from license_service import (
     check_license,
     increment_usage,
     log_request,
-    seed_demo_key,
+    mark_trial_exhausted,
+    plan_label,
+    seed_admin_test_key,
 )
 
 WEB_DIR = Path(__file__).parent / "web"
@@ -26,7 +28,7 @@ WEB_DIR = Path(__file__).parent / "web"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    seed_demo_key()
+    seed_admin_test_key()
     yield
 
 
@@ -48,12 +50,20 @@ class LicenseCheckRequest(BaseModel):
 
 class GenerateRequest(BaseModel):
     license_key: str
+    biz_type: str = "plumbing"
+    company_name: str = ""
+    order_detail: str = ""
     location: str = Field(min_length=1)
+    customer_impression: str = ""
     weather: str = ""
-    issue: str = Field(min_length=1)
+    issue: str = Field(min_length=1)  # 해결사항
     obstacles: List[str] = []
-    solution: str = Field(min_length=1)
-    feeling: str = ""
+    process: str = ""  # 해결과정
+    equipment: str = ""  # 사용장비
+    solution: str = ""  # 하위 호환 (장비+공정 합침)
+    customer_reaction: str = ""
+    feeling: str = ""  # 완료기분
+    extra: str = ""  # 기타사항
     tone: str = Field(min_length=1)
 
 
@@ -72,21 +82,32 @@ def root():
     return RedirectResponse(url="/app/")
 
 
-@app.post("/api/license/verify")
-def verify_license(req: LicenseCheckRequest):
-    status = check_license(req.license_key.strip())
-    if not status.valid:
-        return {"valid": False, "message": status.message}
+def _status_payload(status) -> dict:
+    daily_remaining = max(0, status.daily_limit - status.daily_used)
+    monthly_remaining = max(0, status.monthly_limit - status.monthly_used)
+    unlimited_monthly = status.monthly_limit >= 999999
     return {
         "valid": True,
         "remaining_days": status.remaining_days,
         "expires": status.expires,
         "plan": status.plan,
+        "plan_label": plan_label(status.plan),
         "daily_used": status.daily_used,
         "daily_limit": status.daily_limit,
+        "daily_remaining": daily_remaining,
         "monthly_used": status.monthly_used,
         "monthly_limit": status.monthly_limit,
+        "monthly_remaining": None if unlimited_monthly else monthly_remaining,
+        "monthly_unlimited": unlimited_monthly,
     }
+
+
+@app.post("/api/license/verify")
+def verify_license(req: LicenseCheckRequest):
+    status = check_license(req.license_key.strip())
+    if not status.valid:
+        return {"valid": False, "message": status.message, "plan": status.plan or ""}
+    return _status_payload(status)
 
 
 @app.post("/api/generate")
@@ -104,18 +125,35 @@ def generate_post(req: GenerateRequest):
         )
 
     if status.monthly_used >= status.monthly_limit:
-        raise HTTPException(
-            status_code=429,
-            detail=f"이번 달 생성 한도({status.monthly_limit}건)를 모두 사용했습니다.",
-        )
+        detail = f"이번 달 생성 한도({status.monthly_limit}건)를 모두 사용했습니다."
+        if status.plan in ("trial", "demo"):
+            detail = "체험이 종료되었습니다. 1건 사용을 모두 완료했습니다."
+        raise HTTPException(status_code=429, detail=detail)
+
+    process = (req.process or "").strip()
+    equipment = (req.equipment or "").strip()
+    solution = (req.solution or "").strip()
+    if not solution:
+        parts = [p for p in (process, equipment) if p]
+        solution = " / ".join(parts)
+    if not solution:
+        raise HTTPException(status_code=422, detail="해결과정 또는 사용장비를 입력해 주세요.")
 
     prompt = build_prompt(
+        biz_type=req.biz_type,
+        company_name=req.company_name,
+        order_detail=req.order_detail,
         location=req.location,
+        customer_impression=req.customer_impression,
         weather=req.weather,
         issue=req.issue,
         obstacles=req.obstacles,
-        solution=req.solution,
+        process=process,
+        equipment=equipment,
+        solution=solution,
+        customer_reaction=req.customer_reaction,
         feeling=req.feeling,
+        extra=req.extra,
         tone=req.tone,
     )
 
@@ -123,13 +161,14 @@ def generate_post(req: GenerateRequest):
     try:
         content, model = generate_content(prompt)
         increment_usage(key)
+        mark_trial_exhausted(key)
         log_request(key, "/api/generate", model=model, success=True)
         return {"result": content, "model": model}
     except Exception as e:
         log_request(key, "/api/generate", model=model or None, success=False)
         message = str(e)
         if "401" in message or "API_KEY_INVALID" in message or "API key" in message:
-            detail = "Gemini API 키가 올바르지 않습니다. Google AI Studio에서 키를 다시 발급해 .env에 넣어 주세요."
+            detail = "Gemini API 키가 올바르지 않습니다. Google AI Studio에서 키 다시 발급해 .env에 넣어 주세요."
         elif "404" in message or "not found" in message.lower() or "no longer available" in message.lower():
             detail = "Gemini 모델 이름을 찾지 못했습니다. 서버 터미널의 Gemini 로그를 확인해 주세요."
         elif "429" in message or "quota" in message.lower():

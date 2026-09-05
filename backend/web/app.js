@@ -1,13 +1,57 @@
 (() => {
   const API_BASE = ""; // same origin on Render
 
+  const OBSTACLES = {
+    plumbing: [
+      ["배관 노후 심각", "배관 노후"],
+      ["기름 슬러지 과다", "슬러지 과다"],
+      ["작업 공간 협소", "공간 협소"],
+      ["타업체 해결 실패", "타사 실패건"],
+    ],
+    cleaning: [
+      ["심한 오염/찌든 때", "찌든 때"],
+      ["가구·가전 이동 곤란", "이동 곤란"],
+      ["악취·곰팡이", "악취/곰팡이"],
+      ["입주 전 폐기물 과다", "폐기물 과다"],
+    ],
+    custom: [],
+  };
+
+  const PLACEHOLDERS = {
+    plumbing: {
+      order: "예: 싱크대 하부 누수 수리",
+      issue: "예: 싱크대 하부장 누수 및 곰팡이 냄새",
+      process: "예: 내시경 확인 후 주름관 교체 및 방수 실링",
+      equipment: "예: 배관 내시경, 주름관",
+    },
+    cleaning: {
+      order: "예: 입주 전 전체 청소",
+      issue: "예: 입주 청소 · 주방/욕실 찌든 때 제거",
+      process: "예: 가구 이동 후 스팀 클리닝 및 환기",
+      equipment: "예: 스팀기, 진공청소기, 세제",
+    },
+    custom: {
+      order: "예: 오늘 받은 주문 내용",
+      issue: "예: 해결한 핵심 내용",
+      process: "예: 작업 순서와 해결 과정",
+      equipment: "예: 사용한 도구/장비",
+    },
+  };
+
   const els = {
     badge: document.getElementById("licenseBadge"),
+    usageCard: document.getElementById("usageCard"),
+    usagePlan: document.getElementById("usagePlan"),
+    usageDays: document.getElementById("usageDays"),
+    usageDaily: document.getElementById("usageDaily"),
+    usageMonthly: document.getElementById("usageMonthly"),
     key: document.getElementById("licenseKey"),
     verifyBtn: document.getElementById("verifyBtn"),
     licenseError: document.getElementById("licenseError"),
+    bankToggle: document.getElementById("bankToggle"),
     bankNotice: document.getElementById("bankNotice"),
     form: document.getElementById("genForm"),
+    bizType: document.getElementById("bizType"),
     generateBtn: document.getElementById("generateBtn"),
     genError: document.getElementById("genError"),
     resultSection: document.getElementById("resultSection"),
@@ -39,15 +83,79 @@
     els.badge.textContent = text;
   }
 
+  function hideUsage() {
+    els.usageCard.hidden = true;
+  }
+
+  function renderUsage(data) {
+    els.usageCard.hidden = false;
+    els.usagePlan.textContent = data.plan_label || data.plan || "—";
+    els.usageDays.textContent =
+      data.plan === "trial" || data.plan === "demo"
+        ? "1건 사용 시 종료"
+        : `D-${data.remaining_days ?? "?"}일`;
+    const dailyRem =
+      data.daily_remaining ??
+      Math.max(0, (data.daily_limit || 0) - (data.daily_used || 0));
+    els.usageDaily.textContent = `${dailyRem}건 (한도 ${data.daily_limit}건)`;
+    if (data.monthly_unlimited) {
+      els.usageMonthly.textContent = "무제한";
+    } else {
+      const monthlyRem =
+        data.monthly_remaining ??
+        Math.max(0, (data.monthly_limit || 0) - (data.monthly_used || 0));
+      els.usageMonthly.textContent = `${monthlyRem}건 (한도 ${data.monthly_limit}건)`;
+    }
+  }
+
   function renderBank(biz) {
     if (!biz) return;
-    const price = Number(biz.monthlyPrice || 29000).toLocaleString("ko-KR");
+    const monthly = Number(biz.monthlyPrice || 12900).toLocaleString("ko-KR");
+    const yearly = Number(biz.yearlyPrice || 129000).toLocaleString("ko-KR");
     els.bankNotice.innerHTML =
-      `💳 <b>구독 안내:</b> 월 ${price}원 (30일)<br>` +
+      `💳 <b>구독 안내</b><br>` +
+      `월 ${monthly}원 (30일) · 연 ${yearly}원 (365일)<br>` +
       `${biz.bankName} ${biz.accountNumber} (예금주: ${biz.accountHolder})<br>` +
       `입금 후 ${biz.contactMethod}(${biz.contact}) 주시면 ${biz.keyDeliveryMinutes}분 내 키를 발급해 드립니다.<br>` +
       `<span style="color:#94a3b8;font-size:12px;">※ 서버 첫 연결 시 30초 정도 걸릴 수 있습니다 (무료 호스팅).</span>`;
   }
+
+  function renderObstacles(type) {
+    const box = document.getElementById("obstacleChecks");
+    if (type === "custom") {
+      box.innerHTML =
+        `<label class="full"><input type="text" id="obstacleCustom" placeholder="현장 고충을 직접 적어 주세요" /></label>`;
+      return;
+    }
+    box.innerHTML = OBSTACLES[type]
+      .map(
+        ([v, label]) =>
+          `<label><input type="checkbox" name="obstacle" value="${v}" /> ${label}</label>`
+      )
+      .join("");
+  }
+
+  function applyPlaceholders(type) {
+    const p = PLACEHOLDERS[type] || PLACEHOLDERS.custom;
+    document.getElementById("orderDetail").placeholder = p.order;
+    document.getElementById("issue").placeholder = p.issue;
+    document.getElementById("process").placeholder = p.process;
+    document.getElementById("equipment").placeholder = p.equipment;
+  }
+
+  function onBizTypeChange() {
+    const type = els.bizType.value;
+    renderObstacles(type);
+    applyPlaceholders(type);
+  }
+
+  els.bizType.addEventListener("change", onBizTypeChange);
+  onBizTypeChange();
+
+  els.bankToggle.addEventListener("click", () => {
+    els.bankNotice.hidden = !els.bankNotice.hidden;
+    els.bankToggle.classList.toggle("open", !els.bankNotice.hidden);
+  });
 
   async function api(path, body) {
     const res = await fetch(`${API_BASE}${path}`, {
@@ -76,6 +184,7 @@
     const key = els.key.value.trim();
     if (!key) {
       if (!silent) showError(els.licenseError, "라이선스 키를 입력해 주세요.");
+      hideUsage();
       return;
     }
     showError(els.licenseError, "");
@@ -87,25 +196,29 @@
         isValid = false;
         els.generateBtn.disabled = true;
         setBadge("inactive", "라이선스 무효");
+        hideUsage();
         showError(els.licenseError, data.message || "등록할 수 없는 키입니다.");
         return;
       }
       isValid = true;
       licenseKey = key;
       localStorage.setItem("autoblog_license_key", key);
-      els.generateBtn.disabled = false;
-      const days = data.remaining_days ?? "?";
-      const used = data.daily_used ?? 0;
-      const limit = data.daily_limit ?? 10;
+      const dailyRem =
+        data.daily_remaining ??
+        Math.max(0, (data.daily_limit || 0) - (data.daily_used || 0));
+      els.generateBtn.disabled = dailyRem <= 0;
+      const kind = dailyRem <= 0 ? "warn" : "active";
       setBadge(
-        used >= limit ? "warn" : "active",
-        `구독 활성 (D-${days}일) · 오늘 ${used}/${limit}건`
+        kind,
+        `${data.plan_label || "구독"} · 오늘 남은 ${dailyRem}건`
       );
+      renderUsage(data);
       showError(els.licenseError, "");
     } catch (e) {
       isValid = false;
       els.generateBtn.disabled = true;
       setBadge("inactive", "서버 연결 실패");
+      hideUsage();
       showError(
         els.licenseError,
         e.message.includes("Failed") || e.message.includes("fetch")
@@ -120,6 +233,17 @@
 
   els.verifyBtn.addEventListener("click", () => verify(false));
 
+  function collectObstacles() {
+    const custom = document.getElementById("obstacleCustom");
+    if (custom) {
+      const v = custom.value.trim();
+      return v ? [v] : [];
+    }
+    return [...document.querySelectorAll('input[name="obstacle"]:checked')].map(
+      (el) => el.value
+    );
+  }
+
   els.form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     if (!isValid || !licenseKey) {
@@ -131,19 +255,22 @@
     els.generateBtn.disabled = true;
     els.generateBtn.textContent = "생성 중… (최대 1분)";
 
-    const obstacles = [...document.querySelectorAll('input[name="obstacle"]:checked')].map(
-      (el) => el.value
-    );
-
     try {
       const data = await api("/api/generate", {
         license_key: licenseKey,
+        biz_type: els.bizType.value,
+        company_name: document.getElementById("companyName").value.trim(),
+        order_detail: document.getElementById("orderDetail").value.trim(),
         location: document.getElementById("location").value.trim(),
+        customer_impression: document.getElementById("customerImpression").value.trim(),
         weather: document.getElementById("weather").value,
         issue: document.getElementById("issue").value.trim(),
-        obstacles,
-        solution: document.getElementById("solution").value.trim(),
+        obstacles: collectObstacles(),
+        process: document.getElementById("process").value.trim(),
+        equipment: document.getElementById("equipment").value.trim(),
+        customer_reaction: document.getElementById("customerReaction").value.trim(),
         feeling: document.getElementById("feeling").value.trim(),
+        extra: document.getElementById("extra").value.trim(),
         tone: document.getElementById("tone").value,
       });
       els.resultSection.hidden = false;

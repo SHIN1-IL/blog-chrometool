@@ -1,21 +1,95 @@
 let isLicenseValid = false;
 
+const OBSTACLES = {
+  plumbing: [
+    ["배관 노후 심각", "배관 노후"],
+    ["기름 슬러지 과다", "슬러지 과다"],
+    ["작업 공간 협소", "공간 협소"],
+    ["타업체 해결 실패", "타사 실패건"],
+  ],
+  cleaning: [
+    ["심한 오염/찌든 때", "찌든 때"],
+    ["가구·가전 이동 곤란", "이동 곤란"],
+    ["악취·곰팡이", "악취/곰팡이"],
+    ["입주 전 폐기물 과다", "폐기물 과다"],
+  ],
+  custom: [],
+};
+
+const PLACEHOLDERS = {
+  plumbing: {
+    order: "예: 싱크대 하부 누수 수리",
+    issue: "예: 싱크대 하부장 누수 및 곰팡이 냄새",
+    process: "예: 내시경 확인 후 주름관 교체 및 방수 실링",
+    equipment: "예: 배관 내시경, 주름관",
+  },
+  cleaning: {
+    order: "예: 입주 전 전체 청소",
+    issue: "예: 입주 청소 · 주방/욕실 찌든 때 제거",
+    process: "예: 가구 이동 후 스팀 클리닝 및 환기",
+    equipment: "예: 스팀기, 진공청소기, 세제",
+  },
+  custom: {
+    order: "예: 오늘 받은 주문 내용",
+    issue: "예: 해결한 핵심 내용",
+    process: "예: 작업 순서와 해결 과정",
+    equipment: "예: 사용한 도구/장비",
+  },
+};
+
 function renderBusinessNotice() {
   const el = document.getElementById("bankNotice");
   if (!el || typeof BUSINESS === "undefined") return;
-  const price = BUSINESS.monthlyPrice.toLocaleString("ko-KR");
+  const monthly = BUSINESS.monthlyPrice.toLocaleString("ko-KR");
+  const yearly = (BUSINESS.yearlyPrice || 129000).toLocaleString("ko-KR");
   el.innerHTML = `
-    💳 <b>구독 안내:</b> 월 ${price}원 (30일)<br>
+    💳 <b>구독 안내</b><br>
+    월 ${monthly}원 (30일) · 연 ${yearly}원 (365일)<br>
     ${BUSINESS.bankName} ${BUSINESS.accountNumber} (예금주: ${BUSINESS.accountHolder})<br>
     입금 후 ${BUSINESS.contactMethod}(${BUSINESS.contact}) 주시면 ${BUSINESS.keyDeliveryMinutes}분 내 키를 발급해 드립니다.<br>
     <span style="color:#94a3b8;font-size:11px;">※ 서버 첫 연결 시 30초 정도 걸릴 수 있습니다 (무료 호스팅).</span>
   `;
 }
 
+function renderObstacles(type) {
+  const box = document.getElementById("obstacleChecks");
+  if (!box) return;
+  if (type === "custom") {
+    box.innerHTML =
+      `<label class="full"><input type="text" id="obstacleCustom" placeholder="현장 고충을 직접 적어 주세요"></label>`;
+    return;
+  }
+  box.innerHTML = OBSTACLES[type]
+    .map(
+      ([v, label]) =>
+        `<label><input type="checkbox" value="${v}"> ${label}</label>`
+    )
+    .join("");
+}
+
+function applyPlaceholders(type) {
+  const p = PLACEHOLDERS[type] || PLACEHOLDERS.custom;
+  const order = document.getElementById("orderDetail");
+  const issue = document.getElementById("issue");
+  const process = document.getElementById("process");
+  const equipment = document.getElementById("equipment");
+  if (order) order.placeholder = p.order;
+  if (issue) issue.placeholder = p.issue;
+  if (process) process.placeholder = p.process;
+  if (equipment) equipment.placeholder = p.equipment;
+}
+
 const els = {
   badge: () => document.getElementById("licenseBadge"),
+  usageCard: () => document.getElementById("usageCard"),
+  usagePlan: () => document.getElementById("usagePlan"),
+  usageDays: () => document.getElementById("usageDays"),
+  usageDaily: () => document.getElementById("usageDaily"),
+  usageMonthly: () => document.getElementById("usageMonthly"),
   keyInput: () => document.getElementById("licenseKeyInput"),
   verifyBtn: () => document.getElementById("verifyKeyBtn"),
+  bankToggle: () => document.getElementById("bankToggle"),
+  bankNotice: () => document.getElementById("bankNotice"),
   licenseError: () => document.getElementById("licenseError"),
   generateBtn: () => document.getElementById("generateBtn"),
   resultSection: () => document.getElementById("resultSection"),
@@ -42,17 +116,46 @@ function setBadgeInactive(text) {
   badge.textContent = text;
   isLicenseValid = false;
   els.generateBtn().disabled = true;
+  els.usageCard().classList.remove("visible");
+}
+
+function renderUsage(data) {
+  const card = els.usageCard();
+  card.classList.add("visible");
+  els.usagePlan().textContent = data.plan_label || data.plan || "—";
+  els.usageDays().textContent =
+    data.plan === "trial" || data.plan === "demo"
+      ? "1건 사용 시 종료"
+      : `D-${data.remaining_days ?? "?"}일`;
+  const dailyRem =
+    data.daily_remaining ??
+    Math.max(0, (data.daily_limit || 0) - (data.daily_used || 0));
+  els.usageDaily().textContent = `${dailyRem}건 (한도 ${data.daily_limit}건)`;
+  if (data.monthly_unlimited) {
+    els.usageMonthly().textContent = "무제한";
+  } else {
+    const monthlyRem =
+      data.monthly_remaining ??
+      Math.max(0, (data.monthly_limit || 0) - (data.monthly_used || 0));
+    els.usageMonthly().textContent = `${monthlyRem}건 (한도 ${data.monthly_limit}건)`;
+  }
 }
 
 function setBadgeActive(data) {
   const badge = els.badge();
-  badge.className = "status-badge status-active";
-  badge.textContent =
-    `구독 활성 (D-${data.remaining_days}일) · 오늘 ${data.daily_used}/${data.daily_limit}건`;
+  const dailyRem =
+    data.daily_remaining ??
+    Math.max(0, (data.daily_limit || 0) - (data.daily_used || 0));
+  badge.className =
+    dailyRem <= 0
+      ? "status-badge status-warning"
+      : "status-badge status-active";
+  badge.textContent = `${data.plan_label || "구독"} · 오늘 남은 ${dailyRem}건`;
   isLicenseValid = true;
-  els.generateBtn().disabled = data.daily_used >= data.daily_limit;
+  els.generateBtn().disabled = dailyRem <= 0;
+  renderUsage(data);
   showLicenseError(
-    data.daily_used >= data.daily_limit
+    dailyRem <= 0
       ? `오늘 생성 한도(${data.daily_limit}건)를 모두 사용했습니다. 내일 다시 이용 가능합니다.`
       : ""
   );
@@ -98,37 +201,63 @@ async function verifyLicenseKey(key) {
   }
 }
 
-function getFormPayload() {
-  const obstacles = Array.from(
-    document.querySelectorAll(".checkbox-group input:checked")
+function collectObstacles() {
+  const custom = document.getElementById("obstacleCustom");
+  if (custom) {
+    const v = custom.value.trim();
+    return v ? [v] : [];
+  }
+  return Array.from(
+    document.querySelectorAll("#obstacleChecks input[type='checkbox']:checked")
   ).map((cb) => cb.value);
+}
 
+function getFormPayload() {
   return {
     license_key: els.keyInput().value.trim(),
+    biz_type: document.getElementById("bizType").value,
+    company_name: document.getElementById("companyName").value.trim(),
+    order_detail: document.getElementById("orderDetail").value.trim(),
     location: document.getElementById("location").value.trim(),
+    customer_impression: document.getElementById("customerImpression").value.trim(),
     weather: document.getElementById("weather").value,
     issue: document.getElementById("issue").value.trim(),
-    obstacles,
-    solution: document.getElementById("solution").value.trim(),
+    obstacles: collectObstacles(),
+    process: document.getElementById("process").value.trim(),
+    equipment: document.getElementById("equipment").value.trim(),
+    customer_reaction: document.getElementById("customerReaction").value.trim(),
     feeling: document.getElementById("feeling").value.trim(),
+    extra: document.getElementById("extra").value.trim(),
     tone: document.getElementById("tone").value,
   };
 }
 
 function validateForm(payload) {
-  if (!payload.location) return "현장 위치를 입력해 주세요.";
-  if (!payload.issue) return "해결할 문제를 입력해 주세요.";
-  if (!payload.solution) return "사용한 장비/해결 공정을 입력해 주세요.";
+  if (!payload.location) return "현장위치를 입력해 주세요.";
+  if (!payload.issue) return "해결사항을 입력해 주세요.";
+  if (!payload.process && !payload.equipment) {
+    return "해결과정 또는 사용장비를 입력해 주세요.";
+  }
   if (!payload.tone) return "글 스타일을 선택해 주세요.";
   return null;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   renderBusinessNotice();
+  const bizType = document.getElementById("bizType");
+  renderObstacles(bizType.value);
+  applyPlaceholders(bizType.value);
+  bizType.addEventListener("change", () => {
+    renderObstacles(bizType.value);
+    applyPlaceholders(bizType.value);
+  });
+  els.bankToggle().addEventListener("click", () => {
+    els.bankNotice().classList.toggle("visible");
+  });
   chrome.storage.local.get(["licenseKey"], (result) => {
-    const key = result.licenseKey || "DEMO-KEY";
+    const key = result.licenseKey || "";
     els.keyInput().value = key;
-    verifyLicenseKey(key);
+    if (key) verifyLicenseKey(key);
   });
 });
 
@@ -173,7 +302,7 @@ els.generateBtn().addEventListener("click", async () => {
     await verifyLicenseKey(payload.license_key);
   } catch (err) {
     alert("오류: " + err.message);
-    if (err.message.includes("한도")) {
+    if (err.message.includes("한도") || err.message.includes("체험")) {
       await verifyLicenseKey(payload.license_key);
     }
   } finally {

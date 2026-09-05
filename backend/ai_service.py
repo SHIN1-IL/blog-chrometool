@@ -36,6 +36,13 @@ def _max_tokens() -> int:
     return int(os.getenv("MAX_OUTPUT_TOKENS", "3000"))
 
 
+BIZ_TYPE_LABELS = {
+    "plumbing": "설비업체",
+    "cleaning": "청소업체",
+    "custom": "자가입력",
+}
+
+
 def build_prompt(
     location: str,
     weather: str,
@@ -44,18 +51,36 @@ def build_prompt(
     solution: str,
     feeling: str,
     tone: str,
+    biz_type: str = "plumbing",
+    company_name: str = "",
+    order_detail: str = "",
+    customer_impression: str = "",
+    process: str = "",
+    equipment: str = "",
+    customer_reaction: str = "",
+    extra: str = "",
 ) -> str:
     obstacles_text = ", ".join(obstacles) if obstacles else "없음"
+    biz_label = BIZ_TYPE_LABELS.get(biz_type, biz_type)
+    process_text = process or solution
+    equipment_text = equipment or "미기재"
     return f"""당신은 네이버 블로그 로컬 상위노출 전문 시공 마케터입니다.
 현장 사장님이 직접 겪은 사실만을 바탕으로 신뢰도 높은 후기 글을 작성하세요.
 
-[현장 팩트]
+[업체·현장 팩트]
+- 업체 종류: {biz_label}
+- 업체 이름: {company_name or "미기재"}
+- 주문 내용: {order_detail or "미기재"}
 - 작업 위치: {location}
+- 고객 인상: {customer_impression or "미기재"}
 - 당일 날씨: {weather or "미기재"}
-- 접수된 고장/문제: {issue}
-- 현장 돌발상황: {obstacles_text}
-- 해결 장비 및 공정: {solution}
-- 사장님 소감: {feeling or "미기재"}
+- 해결 사항: {issue}
+- 현장 고충/돌발상황: {obstacles_text}
+- 해결 과정: {process_text or "미기재"}
+- 사용 장비: {equipment_text}
+- 고객 반응: {customer_reaction or "미기재"}
+- 완료 기분/소감: {feeling or "미기재"}
+- 기타 사항: {extra or "없음"}
 - 문체 톤: {tone}
 
 [작성 가이드]

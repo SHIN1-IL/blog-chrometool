@@ -9,11 +9,25 @@ from database import get_db
 
 KST = ZoneInfo("Asia/Seoul")
 
+# 체험: 총 1건 후 종료 / 지인: 일1·월30·1달 / 유료: 일3·월90 / 관리자: 일3·월무제한
 PLAN_DEFAULTS = {
-    "paid": {"daily_limit": 10, "monthly_limit": 200},
-    "family_free": {"daily_limit": 10, "monthly_limit": 150},
-    "demo": {"daily_limit": 3, "monthly_limit": 10},
+    "trial": {"daily_limit": 1, "monthly_limit": 1},
+    "family_free": {"daily_limit": 1, "monthly_limit": 30},
+    "paid": {"daily_limit": 3, "monthly_limit": 90},
+    "admin_test": {"daily_limit": 3, "monthly_limit": 999999},
+    # 하위 호환 (구 DEMO-KEY)
+    "demo": {"daily_limit": 1, "monthly_limit": 1},
 }
+
+PLAN_LABELS = {
+    "trial": "체험플랜",
+    "family_free": "지인플랜",
+    "paid": "유료플랜",
+    "admin_test": "관리자테스트",
+    "demo": "체험플랜",
+}
+
+ADMIN_TEST_KEY = "ADMIN-TEST"
 
 
 @dataclass
@@ -27,6 +41,10 @@ class LicenseStatus:
     daily_limit: int = 0
     monthly_used: int = 0
     monthly_limit: int = 0
+
+
+def plan_label(plan: str) -> str:
+    return PLAN_LABELS.get(plan, plan)
 
 
 def today_kst() -> date:
@@ -82,6 +100,13 @@ def check_license(license_key: str) -> LicenseStatus:
     if not lic:
         return LicenseStatus(valid=False, message="등록되지 않았거나 만료된 라이선스입니다.")
 
+    if lic["status"] == "exhausted":
+        return LicenseStatus(
+            valid=False,
+            message="체험이 종료되었습니다. 1건 사용을 모두 완료했습니다.",
+            plan=lic["plan"],
+        )
+
     if lic["status"] == "suspended":
         return LicenseStatus(valid=False, message="정지된 라이선스입니다. 문의해 주세요.")
 
@@ -122,9 +147,12 @@ def check_quota(license_key: str) -> LicenseStatus:
         )
 
     if status.monthly_used >= status.monthly_limit:
+        msg = f"이번 달 생성 한도({status.monthly_limit}건)를 모두 사용했습니다."
+        if status.plan in ("trial", "demo"):
+            msg = "체험이 종료되었습니다. 1건 사용을 모두 완료했습니다."
         return LicenseStatus(
             valid=False,
-            message=f"이번 달 생성 한도({status.monthly_limit}건)를 모두 사용했습니다.",
+            message=msg,
             remaining_days=status.remaining_days,
             expires=status.expires,
             plan=status.plan,
@@ -156,6 +184,22 @@ def increment_usage(license_key: str) -> None:
             ON CONFLICT(license_key, year_month) DO UPDATE SET count = count + 1
             """,
             (license_key, ym),
+        )
+
+
+def mark_trial_exhausted(license_key: str) -> None:
+    """체험/구데모 키: 1건 사용 후 종료."""
+    lic = get_license(license_key)
+    if not lic or lic["plan"] not in ("trial", "demo"):
+        return
+    with get_db() as conn:
+        conn.execute(
+            """
+            UPDATE licenses
+            SET status = 'exhausted', updated_at = datetime('now')
+            WHERE license_key = ?
+            """,
+            (license_key,),
         )
 
 
@@ -314,12 +358,33 @@ def list_licenses() -> list[dict]:
     return [dict(r) for r in rows]
 
 
-def seed_demo_key() -> None:
-    if get_license("DEMO-KEY"):
+def seed_admin_test_key() -> None:
+    """관리자 고정 키 ADMIN-TEST (일 3 · 월 무제한)."""
+    if get_license(ADMIN_TEST_KEY):
+        # 기존 키가 있으면 한도·플랜을 관리자 설정으로 맞춤
+        defaults = PLAN_DEFAULTS["admin_test"]
+        with get_db() as conn:
+            conn.execute(
+                """
+                UPDATE licenses
+                SET plan = 'admin_test',
+                    daily_limit = ?,
+                    monthly_limit = ?,
+                    status = 'active',
+                    updated_at = datetime('now')
+                WHERE license_key = ?
+                """,
+                (defaults["daily_limit"], defaults["monthly_limit"], ADMIN_TEST_KEY),
+            )
         return
     create_license(
-        plan="demo",
-        days=365,
-        license_key="DEMO-KEY",
-        note="개발·체험용 데모 키",
+        plan="admin_test",
+        days=3650,
+        license_key=ADMIN_TEST_KEY,
+        note="관리자 테스트 고정 키",
     )
+
+
+def seed_demo_key() -> None:
+    """하위 호환: 예전 호출명 → 관리자 키 시드."""
+    seed_admin_test_key()

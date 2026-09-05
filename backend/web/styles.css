@@ -175,6 +175,53 @@ button:disabled,
   line-height: 1.5;
 }
 
+.btn-ghost {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.btn-ghost.open {
+  border-color: var(--green);
+  color: var(--green-dark);
+}
+
+.usage-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-size: 0.88rem;
+}
+
+.usage-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  color: #475569;
+}
+
+.usage-row strong {
+  color: var(--text);
+  font-weight: 700;
+  text-align: right;
+}
+
+.checks .full {
+  grid-column: 1 / -1;
+}
+
+.checks .full input[type="text"] {
+  width: 100%;
+  margin: 0;
+}
+
 .error {
   color: var(--danger);
   font-size: 0.88rem;

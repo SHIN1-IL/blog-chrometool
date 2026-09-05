@@ -38,6 +38,24 @@
     .status-inactive { background: #fee2e2; color: #dc2626; }
     .status-active { background: #dcfce7; color: #15803d; }
     .status-warning { background: #fef3c7; color: #b45309; }
+    .usage-card {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      display: none;
+    }
+    .usage-card.visible { display: block; }
+    .usage-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 2px 0;
+      color: #475569;
+    }
+    .usage-row strong { color: #1e293b; }
     .bank-info {
       font-size: 12px;
       color: #475569;
@@ -47,6 +65,20 @@
       border-radius: 4px;
       margin-top: 6px;
       line-height: 1.4;
+      display: none;
+    }
+    .bank-info.visible { display: block; }
+    .bank-toggle {
+      width: 100%;
+      margin-top: 6px;
+      padding: 8px;
+      background: #fff;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
     }
     .license-row {
       display: flex;
@@ -78,6 +110,9 @@
       display: flex;
       align-items: center;
       gap: 4px;
+    }
+    .checkbox-group .full {
+      grid-column: 1 / -1;
     }
     button {
       width: 100%;
@@ -124,21 +159,52 @@
 
   <div class="license-card">
     <div id="licenseBadge" class="status-badge status-inactive">라이선스 미등록</div>
+    <div id="usageCard" class="usage-card">
+      <div class="usage-row"><span>플랜</span><strong id="usagePlan">—</strong></div>
+      <div class="usage-row"><span>구독 남은 기간</span><strong id="usageDays">—</strong></div>
+      <div class="usage-row"><span>오늘 남은 건수</span><strong id="usageDaily">—</strong></div>
+      <div class="usage-row"><span>이번 달 남은 건수</span><strong id="usageMonthly">—</strong></div>
+    </div>
     <div class="license-row">
-      <input type="text" id="licenseKeyInput" value="DEMO-KEY" placeholder="라이선스 키 입력">
+      <input type="text" id="licenseKeyInput" placeholder="라이선스 키 입력" value="">
       <button id="verifyKeyBtn">등록</button>
     </div>
     <div id="licenseError" class="error-msg"></div>
+    <button type="button" id="bankToggle" class="bank-toggle">구독 안내</button>
     <div class="bank-info" id="bankNotice"></div>
   </div>
 
   <div class="form-group">
-    <label for="location">현장 위치 *</label>
+    <label for="bizType">업체 종류 *</label>
+    <select id="bizType">
+      <option value="plumbing">1. 설비업체</option>
+      <option value="cleaning">2. 청소업체</option>
+      <option value="custom">3. 자가입력</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="companyName">업체이름</label>
+    <input type="text" id="companyName" placeholder="예: ○○설비 / ○○클리닝">
+  </div>
+
+  <div class="form-group">
+    <label for="orderDetail">주문내용</label>
+    <input type="text" id="orderDetail" placeholder="예: 싱크대 하부 누수 수리">
+  </div>
+
+  <div class="form-group">
+    <label for="location">현장위치 *</label>
     <input type="text" id="location" placeholder="예: 서초구 반포동 아파트">
   </div>
 
   <div class="form-group">
-    <label for="weather">오늘의 날씨</label>
+    <label for="customerImpression">고객인상</label>
+    <input type="text" id="customerImpression" placeholder="예: 아줌마, 아저씨, 가정주부, 젊은이, 아가씨">
+  </div>
+
+  <div class="form-group">
+    <label for="weather">오늘날씨</label>
     <select id="weather">
       <option value="">선택 안 함</option>
       <option value="☀️ 맑고 화창함">☀️ 맑고 화창함</option>
@@ -149,28 +215,38 @@
   </div>
 
   <div class="form-group">
-    <label for="issue">해결할 문제 *</label>
+    <label for="issue">해결사항 *</label>
     <input type="text" id="issue" placeholder="예: 싱크대 하부장 누수 및 곰팡이 냄새">
   </div>
 
   <div class="form-group">
-    <label>현장 고충/돌발변수</label>
-    <div class="checkbox-group">
-      <label><input type="checkbox" value="배관 노후 심각"> 배관 노후</label>
-      <label><input type="checkbox" value="기름 슬러지 과다"> 슬러지 과다</label>
-      <label><input type="checkbox" value="작업 공간 협소"> 공간 협소</label>
-      <label><input type="checkbox" value="타업체 해결 실패"> 타사 실패건</label>
-    </div>
+    <label>현장고충</label>
+    <div class="checkbox-group" id="obstacleChecks"></div>
   </div>
 
   <div class="form-group">
-    <label for="solution">사용한 장비 / 해결 공정 *</label>
-    <input type="text" id="solution" placeholder="예: 배관 내시경 확인 후 주름관 교체 및 방수 실링">
+    <label for="process">해결과정 *</label>
+    <input type="text" id="process" placeholder="예: 내시경 확인 후 주름관 교체">
   </div>
 
   <div class="form-group">
-    <label for="feeling">사장님 기분/소감</label>
-    <input type="text" id="feeling" placeholder="예: 사모님이 수고하셨다고 건네주신 박카스에 보람 느낌">
+    <label for="equipment">사용장비</label>
+    <input type="text" id="equipment" placeholder="예: 배관 내시경, 주름관">
+  </div>
+
+  <div class="form-group">
+    <label for="customerReaction">고객반응</label>
+    <input type="text" id="customerReaction" placeholder="예: 감사 인사, 재방문 약속">
+  </div>
+
+  <div class="form-group">
+    <label for="feeling">완료기분</label>
+    <input type="text" id="feeling" placeholder="예: 감사 인사에 보람을 느낌">
+  </div>
+
+  <div class="form-group">
+    <label for="extra">기타사항</label>
+    <input type="text" id="extra" placeholder="예: 추가로 남길 메모">
   </div>
 
   <div class="form-group">
@@ -192,8 +268,8 @@
     <button id="copyBtn" class="secondary">📋 클립보드 복사 (안전용)</button>
   </div>
 
-  <script src="config.js?v=3"></script>
-  <script src="business.js?v=3"></script>
-  <script src="sidepanel.js?v=3"></script>
+  <script src="config.js?v=4"></script>
+  <script src="business.js?v=4"></script>
+  <script src="sidepanel.js?v=4"></script>
 </body>
 </html>

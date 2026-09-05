@@ -6,6 +6,7 @@ import sys
 
 from database import init_db
 from license_service import (
+    ADMIN_TEST_KEY,
     activate_license,
     create_license,
     extend_license,
@@ -13,7 +14,7 @@ from license_service import (
     list_licenses,
     set_limits,
     suspend_license,
-    seed_demo_key,
+    seed_admin_test_key,
 )
 
 
@@ -84,8 +85,8 @@ def cmd_list(_: argparse.Namespace) -> None:
 
 
 def cmd_seed(_: argparse.Namespace) -> None:
-    seed_demo_key()
-    print("✅ DEMO-KEY 시드 완료 (이미 있으면 스킵)")
+    seed_admin_test_key()
+    print(f"✅ {ADMIN_TEST_KEY} 시드 완료 (관리자테스트 · 일3 · 월무제한)")
 
 
 def main() -> None:
@@ -95,7 +96,11 @@ def main() -> None:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_create = sub.add_parser("create", help="새 라이선스 발급")
-    p_create.add_argument("--plan", required=True, choices=["paid", "family_free", "demo"])
+    p_create.add_argument(
+        "--plan",
+        required=True,
+        choices=["paid", "family_free", "trial", "admin_test", "demo"],
+    )
     p_create.add_argument("--days", type=int, default=0)
     p_create.add_argument("--months", type=int, default=0)
     p_create.add_argument("--key", help="지정 키 (미지정 시 자동 생성)")
@@ -130,7 +135,7 @@ def main() -> None:
     p_list = sub.add_parser("list", help="전체 라이선스 목록")
     p_list.set_defaults(func=cmd_list)
 
-    p_seed = sub.add_parser("seed", help="DEMO-KEY 시드")
+    p_seed = sub.add_parser("seed", help=f"{ADMIN_TEST_KEY} 관리자 키 시드")
     p_seed.set_defaults(func=cmd_seed)
 
     args = parser.parse_args()
