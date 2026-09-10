@@ -7,6 +7,22 @@
     let body = rawText;
     let tags = "";
 
+    const trimmed = (rawText || "").trim();
+    if (trimmed.startsWith("{")) {
+      try {
+        const data = JSON.parse(trimmed);
+        const blog = data.naver_blog || data;
+        title = (blog.title || "").trim();
+        body = (blog.content || "").trim();
+        const tagList = Array.isArray(blog.tags) ? blog.tags : [];
+        tags = tagList.join(" ");
+        if (tags) body = `${body}\n\n${tags}`;
+        return { title, body };
+      } catch {
+        /* fall through */
+      }
+    }
+
     if (rawText.includes("[제목]") && rawText.includes("[본문]")) {
       const afterTitle = rawText.split("[제목]")[1];
       const bodyParts = afterTitle.split("[본문]");

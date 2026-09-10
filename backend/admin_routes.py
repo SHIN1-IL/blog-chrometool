@@ -10,6 +10,7 @@ from license_service import (
     extend_license,
     get_license,
     list_licenses,
+    plan_label,
     set_limits,
     suspend_license,
 )
@@ -58,6 +59,7 @@ def admin_get_license(license_key: str):
     lic = get_license(license_key)
     if not lic:
         raise HTTPException(status_code=404, detail="라이선스를 찾을 수 없습니다.")
+    lic["plan_label"] = plan_label(lic.get("plan") or "")
     return lic
 
 

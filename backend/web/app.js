@@ -55,9 +55,7 @@
     generateBtn: document.getElementById("generateBtn"),
     genError: document.getElementById("genError"),
     resultSection: document.getElementById("resultSection"),
-    generatedText: document.getElementById("generatedText"),
     modelTag: document.getElementById("modelTag"),
-    copyBtn: document.getElementById("copyBtn"),
     copyMsg: document.getElementById("copyMsg"),
   };
 
@@ -110,14 +108,17 @@
 
   function renderBank(biz) {
     if (!biz) return;
-    const monthly = Number(biz.monthlyPrice || 12900).toLocaleString("ko-KR");
-    const yearly = Number(biz.yearlyPrice || 129000).toLocaleString("ko-KR");
+    const monthly = Number(biz.monthlyPrice || 24900).toLocaleString("ko-KR");
+    const yearly = Number(biz.yearlyPrice || 249000).toLocaleString("ko-KR");
+    const quarterly = Number(biz.quarterlyPrice || 69000).toLocaleString("ko-KR");
+    const legacy = Number(biz.legacyMonthlyPrice || 12900).toLocaleString("ko-KR");
     els.bankNotice.innerHTML =
-      `💳 <b>구독 안내</b><br>` +
-      `월 ${monthly}원 (30일) · 연 ${yearly}원 (365일)<br>` +
+      `💳 <b>동네광고 올인원</b><br>` +
+      `월 ${monthly}원 · 3개월 ${quarterly}원 · 연 ${yearly}원<br>` +
+      `한 번 입력 → 블로그 · 당근 · 네이버지도 · 카톡<br>` +
       `${biz.bankName} ${biz.accountNumber} (예금주: ${biz.accountHolder})<br>` +
-      `입금 후 ${biz.contactMethod}(${biz.contact}) 주시면 ${biz.keyDeliveryMinutes}분 내 키를 발급해 드립니다.<br>` +
-      `<span style="color:#94a3b8;font-size:12px;">※ 서버 첫 연결 시 30초 정도 걸릴 수 있습니다 (무료 호스팅).</span>`;
+      `입금 후 ${biz.contactMethod}(${biz.contact}) → ${biz.keyDeliveryMinutes}분 내 키<br>` +
+      `<span style="color:#94a3b8;font-size:12px;">기존 월 ${legacy}원은 연장만. 서버 첫 연결 약 30초.</span>`;
   }
 
   function renderObstacles(type) {
@@ -233,6 +234,31 @@
 
   els.verifyBtn.addEventListener("click", () => verify(false));
 
+  function applyChannels(data) {
+    const blog = data.naver_blog || {};
+    document.getElementById("blogTitle").value = blog.title || "";
+    document.getElementById("blogContent").value = blog.content || "";
+    document.getElementById("blogTags").value = (blog.tags || []).join(" ");
+    document.getElementById("daangnText").value = data.daangn_post || "";
+    const place = data.place_review || {};
+    document.getElementById("reviewSms").value = place.customer_sms || "";
+    document.getElementById("placeNews").value = place.place_news || "";
+    document.getElementById("placeKeywords").value = (place.place_keywords || []).join(", ");
+    const kakao = data.kakao || {};
+    document.getElementById("kakaoCustomer").value = kakao.customer_talk || "";
+    document.getElementById("kakaoChannel").value = kakao.channel_post || "";
+    els.modelTag.textContent = data.model ? `엔진: ${data.model}` : "";
+  }
+
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+  });
+
   function collectObstacles() {
     const custom = document.getElementById("obstacleCustom");
     if (custom) {
@@ -272,34 +298,70 @@
         feeling: document.getElementById("feeling").value.trim(),
         extra: document.getElementById("extra").value.trim(),
         tone: document.getElementById("tone").value,
+        photo_count: Number(document.getElementById("photoCount").value || 3),
+        video_count: Number(document.getElementById("videoCount").value || 0),
       });
       els.resultSection.hidden = false;
-      els.generatedText.value = data.result || "";
-      els.modelTag.textContent = data.model ? `엔진: ${data.model}` : "";
+      applyChannels(data);
       els.resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
       await verify(true);
     } catch (e) {
       showError(els.genError, e.message || "생성 실패");
     } finally {
       els.generateBtn.disabled = !isValid;
-      els.generateBtn.textContent = "AI 블로그 글 생성하기";
+      els.generateBtn.textContent = "오늘 현장 광고 만들기";
     }
   });
 
-  els.copyBtn.addEventListener("click", async () => {
-    const text = els.generatedText.value;
+  async function copyFrom(id, ok) {
+    const el = document.getElementById(id);
+    const text = el ? el.value : "";
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
       els.copyMsg.hidden = false;
-      els.copyMsg.textContent = "복사되었습니다. 네이버 블로그 앱에서 붙여넣기 하세요.";
+      els.copyMsg.textContent = ok;
     } catch {
-      els.generatedText.focus();
-      els.generatedText.select();
       els.copyMsg.hidden = false;
-      els.copyMsg.textContent = "복사 버튼을 쓸 수 없습니다. 글을 길게 눌러 복사해 주세요.";
+      els.copyMsg.textContent = "길게 눌러 복사해 주세요.";
     }
+  }
+
+  document.getElementById("copyBlogBtn").addEventListener("click", () => {
+    const t = [
+      document.getElementById("blogTitle").value,
+      document.getElementById("blogContent").value,
+      document.getElementById("blogTags").value,
+    ].join("\n\n");
+    navigator.clipboard.writeText(t.trim()).then(
+      () => {
+        els.copyMsg.hidden = false;
+        els.copyMsg.textContent = "복사되었습니다. 네이버 블로그 앱에 붙여넣기 하세요.";
+      },
+      () => {
+        els.copyMsg.hidden = false;
+        els.copyMsg.textContent = "길게 눌러 복사해 주세요.";
+      }
+    );
   });
+  document.getElementById("copyDaangnBtn").addEventListener("click", () =>
+    copyFrom("daangnText", "당근 문구가 복사되었습니다.")
+  );
+  document.getElementById("copySmsBtn").addEventListener("click", () =>
+    copyFrom("reviewSms", "문자가 복사되었습니다.")
+  );
+  document.getElementById("copyPlaceNewsBtn").addEventListener("click", () =>
+    copyFrom("placeNews", "플레이스 소식이 복사되었습니다.")
+  );
+  document.getElementById("copyKwBtn").addEventListener("click", () =>
+    copyFrom("placeKeywords", "키워드가 복사되었습니다.")
+  );
+  document.getElementById("copyKakaoCustomerBtn").addEventListener("click", () =>
+    copyFrom("kakaoCustomer", "고객 카톡이 복사되었습니다.")
+  );
+  document.getElementById("copyKakaoChannelBtn").addEventListener("click", () =>
+    copyFrom("kakaoChannel", "채널 소식이 복사되었습니다.")
+  );
 
   loadBusiness();
   if (licenseKey) verify(true);

@@ -2,8 +2,10 @@
 // business.example.js 참고
 
 const BUSINESS = {
-  monthlyPrice: 12900,
-  yearlyPrice: 129000,
+  monthlyPrice: 24900,
+  yearlyPrice: 249000,
+  quarterlyPrice: 69000,
+  legacyMonthlyPrice: 12900,
   bankName: "하나은행",
   accountNumber: "365-910996-44807",
   accountHolder: "신일",

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>오토블로그 운영 콘솔</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>오토블로그 운영 콘솔</h1>
+  <p class="sub">관리자 전용 · 검색에 올리지 마세요</p>
+
+  <section class="card" id="loginCard">
+    <label>ADMIN_TOKEN</label>
+    <div class="row">
+      <input type="password" id="token" autocomplete="off" placeholder=".env의 ADMIN_TOKEN" />
+      <button type="button" id="loginBtn">입장</button>
+    </div>
+    <p id="loginErr" class="err" hidden></p>
+  </section>
+
+  <div id="desk" hidden>
+    <section class="card">
+      <h2>빠른 발급</h2>
+      <div class="grid">
+        <button type="button" data-issue="allin-30">올인원 30일 · 24,900</button>
+        <button type="button" data-issue="allin-90">올인원 90일 · 69,000</button>
+        <button type="button" data-issue="allin-365">올인원 365일 · 249,000</button>
+        <button type="button" data-issue="legacy-30">기존일기 30일 · 12,900</button>
+        <button type="button" data-issue="trial">체험 1건</button>
+        <button type="button" data-issue="family-30">지인 30일</button>
+      </div>
+      <label>메모 (업체명·전화)</label>
+      <input type="text" id="note" placeholder="예: ○○설비 010-..." />
+      <p id="issueMsg" class="ok" hidden></p>
+      <label>고객 안내 카톡 (복사)</label>
+      <textarea id="customerMsg" rows="10" readonly></textarea>
+      <button type="button" id="copyMsgBtn" class="secondary">안내문 복사</button>
+    </section>
+
+    <section class="card">
+      <h2>라이선스</h2>
+      <button type="button" id="refreshBtn" class="secondary">새로고침</button>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>키</th>
+              <th>플랜</th>
+              <th>만료</th>
+              <th>상태</th>
+              <th>오늘</th>
+              <th>메모</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

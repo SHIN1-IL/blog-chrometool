@@ -1,0 +1,56 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+  margin: 0 auto;
+  padding: 16px;
+  max-width: 960px;
+  color: #1e293b;
+  background: #f8fafc;
+  font-size: 14px;
+}
+h1 { font-size: 1.2rem; margin: 0 0 4px; }
+.sub { color: #64748b; margin: 0 0 16px; font-size: 12px; }
+.card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.row { display: flex; gap: 8px; }
+input, textarea, button {
+  font: inherit;
+  box-sizing: border-box;
+}
+input, textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  margin: 6px 0 10px;
+}
+.row input { flex: 1; }
+button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #03c75a;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+button.secondary { background: #475569; }
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.grid button { margin: 0; font-size: 12px; }
+.err { color: #dc2626; }
+.ok { color: #15803d; font-weight: 600; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #e2e8f0; }
+.actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.actions button { padding: 4px 6px; font-size: 11px; }
+code { font-size: 11px; }

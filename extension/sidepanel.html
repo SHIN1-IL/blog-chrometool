@@ -131,11 +131,35 @@
       cursor: not-allowed;
     }
     button.secondary { background: #475569; }
-    textarea#generatedText {
-      height: 200px;
+    textarea.result-box {
+      height: 160px;
       resize: vertical;
       margin-top: 6px;
     }
+    textarea.result-box.short { height: 110px; }
+    .tab-container {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+      border-bottom: 2px solid #cbd5e1;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 8px 2px;
+      background: #f1f5f9;
+      color: #64748b;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: bold;
+      margin-top: 0;
+    }
+    .tab-btn.active { background: #03c75a; color: #fff; }
+    .tab-content { display: none; padding-top: 8px; }
+    .tab-content.active { display: block; }
+    .hint-line { font-size: 11px; color: #64748b; margin: 6px 0; }
+    #blogTitle, #blogTags, #placeKeywords { margin-bottom: 6px; }
     .error-msg {
       color: #dc2626;
       font-size: 12px;
@@ -250,6 +274,26 @@
   </div>
 
   <div class="form-group">
+    <label for="photoCount">넣을 사진 수</label>
+    <select id="photoCount">
+      <option value="0">0장 (글만)</option>
+      <option value="1">1장</option>
+      <option value="2">2장</option>
+      <option value="3" selected>3장 (권장)</option>
+      <option value="4">4장</option>
+      <option value="5">5장</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="videoCount">짧은 영상</label>
+    <select id="videoCount">
+      <option value="0" selected>없음</option>
+      <option value="1">1개 (15~30초, 직접 첨부)</option>
+    </select>
+  </div>
+
+  <div class="form-group">
     <label for="tone">글 스타일 *</label>
     <select id="tone">
       <option value="친절하고 꼼꼼한 전문가형">친절한 전문가형</option>
@@ -258,18 +302,51 @@
     </select>
   </div>
 
-  <button id="generateBtn" disabled>🚀 AI 블로그 글 생성하기</button>
+  <button id="generateBtn" disabled>🚀 오늘 현장 광고 만들기</button>
 
   <div id="resultSection" class="result-section">
-    <label for="generatedText">검수 및 수정</label>
-    <textarea id="generatedText" placeholder="AI가 작성한 초안이 여기에 표시됩니다."></textarea>
+    <div class="tab-container">
+      <button type="button" class="tab-btn active" data-tab="tab-blog">🟢 블로그</button>
+      <button type="button" class="tab-btn" data-tab="tab-daangn">🥕 당근</button>
+      <button type="button" class="tab-btn" data-tab="tab-place">📍 지도</button>
+      <button type="button" class="tab-btn" data-tab="tab-kakao">💬 카톡</button>
+    </div>
+    <div id="tab-blog" class="tab-content active">
+      <input type="text" id="blogTitle" placeholder="블로그 제목">
+      <textarea id="blogContent" class="result-box" placeholder="블로그 본문"></textarea>
+      <input type="text" id="blogTags" placeholder="#태그">
+      <p class="hint-line">사진은 본문 마커 자리에 직접 넣으세요. 당근·지도에는 1~2장만 쓰는 것이 좋습니다.</p>
+      <button id="injectBtn">📝 네이버 에디터로 보내기</button>
+      <button id="copyBlogBtn" class="secondary">📋 블로그 전체 복사</button>
+    </div>
+    <div id="tab-daangn" class="tab-content">
+      <textarea id="daangnText" class="result-box" placeholder="당근 비즈프로필 소식"></textarea>
+      <button id="copyDaangnBtn" class="secondary">🥕 당근 문구 복사</button>
+    </div>
+    <div id="tab-place" class="tab-content">
+      <label for="reviewSms">고객 리뷰 요청 문자</label>
+      <textarea id="reviewSms" class="result-box short" placeholder="문자"></textarea>
+      <button id="copySmsBtn" class="secondary">💬 문자 복사</button>
+      <label>플레이스 소식</label>
+      <textarea id="placeNews" class="result-box short" placeholder="네이버지도 소식"></textarea>
+      <button id="copyPlaceNewsBtn" class="secondary">📍 소식 복사</button>
+      <label>플레이스 키워드</label>
+      <input type="text" id="placeKeywords" readonly>
+      <button id="copyKwBtn" class="secondary">📋 키워드 복사</button>
+    </div>
+    <div id="tab-kakao" class="tab-content">
+      <label>고객 카톡</label>
+      <textarea id="kakaoCustomer" class="result-box short" placeholder="시공 직후 고객 카톡"></textarea>
+      <button id="copyKakaoCustomerBtn" class="secondary">💬 고객 카톡 복사</button>
+      <label>채널/단골 소식</label>
+      <textarea id="kakaoChannel" class="result-box short" placeholder="카톡 채널 소식"></textarea>
+      <button id="copyKakaoChannelBtn" class="secondary">📢 채널 소식 복사</button>
+    </div>
     <div id="modelTag" class="model-tag"></div>
-    <button id="injectBtn">📝 네이버 에디터로 보내기</button>
-    <button id="copyBtn" class="secondary">📋 클립보드 복사 (안전용)</button>
   </div>
 
-  <script src="config.js?v=4"></script>
-  <script src="business.js?v=4"></script>
-  <script src="sidepanel.js?v=4"></script>
+  <script src="config.js?v=6"></script>
+  <script src="business.js?v=6"></script>
+  <script src="sidepanel.js?v=6"></script>
 </body>
 </html>

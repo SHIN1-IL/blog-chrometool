@@ -40,14 +40,17 @@ const PLACEHOLDERS = {
 function renderBusinessNotice() {
   const el = document.getElementById("bankNotice");
   if (!el || typeof BUSINESS === "undefined") return;
-  const monthly = BUSINESS.monthlyPrice.toLocaleString("ko-KR");
-  const yearly = (BUSINESS.yearlyPrice || 129000).toLocaleString("ko-KR");
+  const monthly = Number(BUSINESS.monthlyPrice || 24900).toLocaleString("ko-KR");
+  const yearly = Number(BUSINESS.yearlyPrice || 249000).toLocaleString("ko-KR");
+  const quarterly = Number(BUSINESS.quarterlyPrice || 69000).toLocaleString("ko-KR");
+  const legacy = Number(BUSINESS.legacyMonthlyPrice || 12900).toLocaleString("ko-KR");
   el.innerHTML = `
-    💳 <b>구독 안내</b><br>
-    월 ${monthly}원 (30일) · 연 ${yearly}원 (365일)<br>
+    💳 <b>동네광고 올인원</b><br>
+    월 ${monthly}원 (30일) · 3개월 ${quarterly}원 · 연 ${yearly}원<br>
+    한 번 입력 → 블로그 · 당근 · 네이버지도 · 카톡 초안<br>
     ${BUSINESS.bankName} ${BUSINESS.accountNumber} (예금주: ${BUSINESS.accountHolder})<br>
-    입금 후 ${BUSINESS.contactMethod}(${BUSINESS.contact}) 주시면 ${BUSINESS.keyDeliveryMinutes}분 내 키를 발급해 드립니다.<br>
-    <span style="color:#94a3b8;font-size:11px;">※ 서버 첫 연결 시 30초 정도 걸릴 수 있습니다 (무료 호스팅).</span>
+    입금자명=성함, 메모에 「올인원」 · 후 ${BUSINESS.contactMethod}(${BUSINESS.contact}) → ${BUSINESS.keyDeliveryMinutes}분 내 키<br>
+    <span style="color:#94a3b8;font-size:11px;">기존 월 ${legacy}원(블로그)은 연장만 가능합니다. 서버 첫 연결은 30초 걸릴 수 있습니다.</span>
   `;
 }
 
@@ -93,9 +96,7 @@ const els = {
   licenseError: () => document.getElementById("licenseError"),
   generateBtn: () => document.getElementById("generateBtn"),
   resultSection: () => document.getElementById("resultSection"),
-  generatedText: () => document.getElementById("generatedText"),
   modelTag: () => document.getElementById("modelTag"),
-  copyBtn: () => document.getElementById("copyBtn"),
   injectBtn: () => document.getElementById("injectBtn"),
 };
 
@@ -229,6 +230,8 @@ function getFormPayload() {
     feeling: document.getElementById("feeling").value.trim(),
     extra: document.getElementById("extra").value.trim(),
     tone: document.getElementById("tone").value,
+    photo_count: Number(document.getElementById("photoCount").value || 3),
+    video_count: Number(document.getElementById("videoCount").value || 0),
   };
 }
 
@@ -242,6 +245,43 @@ function validateForm(payload) {
   return null;
 }
 
+function applyChannels(data) {
+  const blog = data.naver_blog || {};
+  document.getElementById("blogTitle").value = blog.title || "";
+  document.getElementById("blogContent").value = blog.content || "";
+  document.getElementById("blogTags").value = (blog.tags || []).join(" ");
+  document.getElementById("daangnText").value = data.daangn_post || "";
+  const place = data.place_review || {};
+  document.getElementById("reviewSms").value = place.customer_sms || "";
+  document.getElementById("placeNews").value = place.place_news || "";
+  document.getElementById("placeKeywords").value = (place.place_keywords || []).join(", ");
+  const kakao = data.kakao || {};
+  document.getElementById("kakaoCustomer").value = kakao.customer_talk || "";
+  document.getElementById("kakaoChannel").value = kakao.channel_post || "";
+  els.modelTag().textContent = data.model ? `생성 엔진: ${data.model}` : "";
+  els.resultSection().classList.add("visible");
+}
+
+function blogInjectText() {
+  const title = document.getElementById("blogTitle").value.trim();
+  const content = document.getElementById("blogContent").value.trim();
+  const tags = document.getElementById("blogTags").value.trim();
+  return `[제목]\n${title}\n[본문]\n${content}\n[태그]\n${tags}`;
+}
+
+async function copyText(text, okMsg) {
+  if (!text) {
+    alert("먼저 글을 생성해 주세요.");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    alert(okMsg);
+  } catch {
+    alert("복사에 실패했습니다. 텍스트를 직접 선택해 복사해 주세요.");
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   renderBusinessNotice();
   const bizType = document.getElementById("bizType");
@@ -250,6 +290,14 @@ document.addEventListener("DOMContentLoaded", () => {
   bizType.addEventListener("change", () => {
     renderObstacles(bizType.value);
     applyPlaceholders(bizType.value);
+  });
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
   });
   els.bankToggle().addEventListener("click", () => {
     els.bankNotice().classList.toggle("visible");
@@ -295,10 +343,7 @@ els.generateBtn().addEventListener("click", async () => {
       throw new Error(data.detail || "작성에 실패했습니다.");
     }
 
-    els.generatedText().value = data.result;
-    els.modelTag().textContent = data.model ? `생성 엔진: ${data.model}` : "";
-    els.resultSection().classList.add("visible");
-
+    applyChannels(data);
     await verifyLicenseKey(payload.license_key);
   } catch (err) {
     alert("오류: " + err.message);
@@ -306,25 +351,36 @@ els.generateBtn().addEventListener("click", async () => {
       await verifyLicenseKey(payload.license_key);
     }
   } finally {
-    btn.textContent = "🚀 AI 블로그 글 생성하기";
+    btn.textContent = "🚀 오늘 현장 광고 만들기";
     if (isLicenseValid) {
       btn.disabled = false;
     }
   }
 });
 
-els.copyBtn().addEventListener("click", async () => {
-  const text = els.generatedText().value;
-  if (!text) {
-    alert("먼저 글을 생성해 주세요.");
-    return;
-  }
-  try {
-    await navigator.clipboard.writeText(text);
-    alert("클립보드에 복사되었습니다! 네이버 에디터에서 Ctrl+V 하세요.");
-  } catch {
-    alert("복사에 실패했습니다. 텍스트를 직접 선택해 복사해 주세요.");
-  }
+document.getElementById("copyBlogBtn").addEventListener("click", () => {
+  const title = document.getElementById("blogTitle").value;
+  const body = document.getElementById("blogContent").value;
+  const tags = document.getElementById("blogTags").value;
+  copyText(`${title}\n\n${body}\n\n${tags}`.trim(), "블로그 내용이 복사되었습니다!");
+});
+document.getElementById("copyDaangnBtn").addEventListener("click", () => {
+  copyText(document.getElementById("daangnText").value, "당근 문구가 복사되었습니다!");
+});
+document.getElementById("copySmsBtn").addEventListener("click", () => {
+  copyText(document.getElementById("reviewSms").value, "리뷰 요청 문자가 복사되었습니다!");
+});
+document.getElementById("copyPlaceNewsBtn").addEventListener("click", () => {
+  copyText(document.getElementById("placeNews").value, "플레이스 소식이 복사되었습니다!");
+});
+document.getElementById("copyKwBtn").addEventListener("click", () => {
+  copyText(document.getElementById("placeKeywords").value, "키워드가 복사되었습니다!");
+});
+document.getElementById("copyKakaoCustomerBtn").addEventListener("click", () => {
+  copyText(document.getElementById("kakaoCustomer").value, "고객 카톡이 복사되었습니다!");
+});
+document.getElementById("copyKakaoChannelBtn").addEventListener("click", () => {
+  copyText(document.getElementById("kakaoChannel").value, "채널 소식이 복사되었습니다!");
 });
 
 function sendInjectMessage(tabId, text, frameId) {
@@ -486,8 +542,8 @@ async function copyToClipboard(text) {
 }
 
 els.injectBtn().addEventListener("click", async () => {
-  const text = els.generatedText().value;
-  if (!text) {
+  const text = blogInjectText();
+  if (!document.getElementById("blogTitle").value || !document.getElementById("blogContent").value) {
     alert("먼저 글을 생성해 주세요.");
     return;
   }

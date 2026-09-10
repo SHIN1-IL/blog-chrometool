@@ -9,7 +9,11 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from ai_service import build_prompt, generate_content
+from ai_service import (
+    build_prompt,
+    channels_to_legacy_result,
+    generate_channels,
+)
 from admin_routes import router as admin_router
 from business_config import get_business_info
 from database import init_db
@@ -23,6 +27,7 @@ from license_service import (
 )
 
 WEB_DIR = Path(__file__).parent / "web"
+OPS_DIR = Path(__file__).parent / "ops"
 
 
 @asynccontextmanager
@@ -65,6 +70,8 @@ class GenerateRequest(BaseModel):
     feeling: str = ""  # 완료기분
     extra: str = ""  # 기타사항
     tone: str = Field(min_length=1)
+    photo_count: int = Field(default=3, ge=0, le=5)
+    video_count: int = Field(default=0, ge=0, le=1)
 
 
 @app.get("/health")
@@ -80,6 +87,11 @@ def business():
 @app.get("/")
 def root():
     return RedirectResponse(url="/app/")
+
+
+@app.get("/ops")
+def ops_redirect():
+    return RedirectResponse(url="/ops/")
 
 
 def _status_payload(status) -> dict:
@@ -155,15 +167,22 @@ def generate_post(req: GenerateRequest):
         feeling=req.feeling,
         extra=req.extra,
         tone=req.tone,
+        photo_count=req.photo_count,
+        video_count=req.video_count,
     )
 
     model = ""
     try:
-        content, model = generate_content(prompt)
+        channels, model = generate_channels(prompt)
         increment_usage(key)
         mark_trial_exhausted(key)
         log_request(key, "/api/generate", model=model, success=True)
-        return {"result": content, "model": model}
+        return {
+            **channels,
+            "result": channels_to_legacy_result(channels),
+            "model": model,
+            "remaining_days": status.remaining_days,
+        }
     except Exception as e:
         log_request(key, "/api/generate", model=model or None, success=False)
         message = str(e)
@@ -180,4 +199,5 @@ def generate_post(req: GenerateRequest):
         raise HTTPException(status_code=500, detail=detail) from e
 
 
+app.mount("/ops", StaticFiles(directory=str(OPS_DIR), html=True), name="ops")
 app.mount("/app", StaticFiles(directory=str(WEB_DIR), html=True), name="web")

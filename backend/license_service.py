@@ -355,7 +355,15 @@ def list_licenses() -> list[dict]:
         rows = conn.execute(
             "SELECT * FROM licenses ORDER BY created_at DESC"
         ).fetchall()
-    return [dict(r) for r in rows]
+    out = []
+    for r in rows:
+        item = dict(r)
+        daily_used, monthly_used = _get_usage(item["license_key"])
+        item["daily_used"] = daily_used
+        item["monthly_used"] = monthly_used
+        item["plan_label"] = plan_label(item.get("plan") or "")
+        out.append(item)
+    return out
 
 
 def seed_admin_test_key() -> None:

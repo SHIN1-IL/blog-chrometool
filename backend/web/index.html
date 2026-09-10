@@ -108,6 +108,26 @@
     </label>
 
     <label>
+      넣을 사진 수
+      <select id="photoCount">
+        <option value="0">0장 (글만)</option>
+        <option value="1">1장</option>
+        <option value="2">2장</option>
+        <option value="3" selected>3장 (권장)</option>
+        <option value="4">4장</option>
+        <option value="5">5장</option>
+      </select>
+    </label>
+
+    <label>
+      짧은 영상
+      <select id="videoCount">
+        <option value="0" selected>없음</option>
+        <option value="1">1개 (15~30초, 각 앱에서 직접 첨부)</option>
+      </select>
+    </label>
+
+    <label>
       글 스타일 *
       <select id="tone" required>
         <option value="친절하고 꼼꼼한 전문가형">친절한 전문가형</option>
@@ -116,16 +136,49 @@
       </select>
     </label>
 
-    <button type="submit" id="generateBtn" class="btn-primary" disabled>AI 블로그 글 생성하기</button>
+    <button type="submit" id="generateBtn" class="btn-primary" disabled>오늘 현장 광고 만들기</button>
     <p id="genError" class="error" hidden></p>
     <p class="hint">※ 무료 서버는 첫 연결 시 30~60초 걸릴 수 있습니다.</p>
   </form>
 
   <section id="resultSection" class="card result" hidden>
-    <label for="generatedText">검수 및 수정</label>
-    <textarea id="generatedText" rows="14"></textarea>
+    <div class="tab-container">
+      <button type="button" class="tab-btn active" data-tab="tab-blog">블로그</button>
+      <button type="button" class="tab-btn" data-tab="tab-daangn">당근</button>
+      <button type="button" class="tab-btn" data-tab="tab-place">지도</button>
+      <button type="button" class="tab-btn" data-tab="tab-kakao">카톡</button>
+    </div>
+    <div id="tab-blog" class="tab-content active">
+      <input type="text" id="blogTitle" placeholder="제목" />
+      <textarea id="blogContent" rows="10"></textarea>
+      <input type="text" id="blogTags" placeholder="#태그" />
+      <p class="hint">사진·영상은 본문 마커 자리에 네이버 앱에서 직접 넣으세요.</p>
+      <button type="button" id="copyBlogBtn" class="btn-primary">블로그 전체 복사</button>
+    </div>
+    <div id="tab-daangn" class="tab-content">
+      <textarea id="daangnText" rows="8"></textarea>
+      <button type="button" id="copyDaangnBtn" class="btn-primary">당근 문구 복사</button>
+    </div>
+    <div id="tab-place" class="tab-content">
+      <label for="reviewSms">리뷰 요청 문자</label>
+      <textarea id="reviewSms" rows="5"></textarea>
+      <button type="button" id="copySmsBtn" class="btn-primary">문자 복사</button>
+      <label>플레이스 소식</label>
+      <textarea id="placeNews" rows="5"></textarea>
+      <button type="button" id="copyPlaceNewsBtn" class="btn-primary">소식 복사</button>
+      <label>키워드</label>
+      <input type="text" id="placeKeywords" readonly />
+      <button type="button" id="copyKwBtn" class="btn-primary">키워드 복사</button>
+    </div>
+    <div id="tab-kakao" class="tab-content">
+      <label>고객 카톡</label>
+      <textarea id="kakaoCustomer" rows="5"></textarea>
+      <button type="button" id="copyKakaoCustomerBtn" class="btn-primary">고객 카톡 복사</button>
+      <label>채널/단골 소식</label>
+      <textarea id="kakaoChannel" rows="5"></textarea>
+      <button type="button" id="copyKakaoChannelBtn" class="btn-primary">채널 소식 복사</button>
+    </div>
     <p id="modelTag" class="model"></p>
-    <button type="button" id="copyBtn" class="btn-primary">전체 복사 (네이버 앱에 붙여넣기)</button>
     <p id="copyMsg" class="ok" hidden></p>
   </section>
 

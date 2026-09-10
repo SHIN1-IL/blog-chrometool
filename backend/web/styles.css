@@ -247,8 +247,39 @@ button:disabled,
 }
 
 .result textarea {
-  min-height: 280px;
+  min-height: 160px;
   resize: vertical;
+}
+
+.tab-container {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.tab-btn {
+  flex: 1;
+  margin: 0;
+  padding: 8px 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: var(--muted);
+  border: none;
+  border-radius: 8px;
+}
+
+.tab-btn.active {
+  background: var(--green);
+  color: #fff;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
 }
 
 .footer {
