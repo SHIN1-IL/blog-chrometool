@@ -13,6 +13,8 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: OPENAI_ENABLED
+        value: "true"
       - key: ADMIN_TOKEN
         sync: false
       # Free plan: no persistent disk. Use local file (resets on redeploy/sleep).

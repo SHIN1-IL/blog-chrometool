@@ -11,11 +11,10 @@ import env_loader  # noqa: F401
 logger = logging.getLogger(__name__)
 
 GEMINI_MODELS = [
-    "gemini-2.5-flash",
-    "gemini-flash-latest",
-    "gemini-2.0-flash",
+    "gemini-3.8-flash",
     "gemini-3.6-flash",
     "gemini-3.5-flash",
+    "gemini-flash-latest",
 ]
 OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 OPENAI_MODEL = "gpt-4o-mini"
@@ -282,41 +281,61 @@ def _call_gemini(prompt: str) -> tuple[str, str]:
         "Content-Type": "application/json",
         "x-goog-api-key": key,
     }
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "maxOutputTokens": _max_tokens(),
-            "thinkingConfig": {"thinkingBudget": 0},
-            "responseMimeType": "application/json",
-            "temperature": 0.7,
-        },
+    gen = {
+        "maxOutputTokens": _max_tokens(),
+        "responseMimeType": "application/json",
+        "temperature": 0.7,
     }
+    payloads = [
+        {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {**gen, "thinkingConfig": {"thinkingBudget": 0}},
+        },
+        {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": gen,
+        },
+    ]
 
     for model in GEMINI_MODELS:
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
             f"{model}:generateContent"
         )
-        try:
-            res = requests.post(
-                url, json=payload, headers=headers, timeout=_gemini_timeout()
-            )
-            if not res.ok:
-                last_error = RuntimeError(
-                    f"Gemini {model} HTTP {res.status_code}: {_http_error_message(res)}"
+        for payload in payloads:
+            try:
+                res = requests.post(
+                    url, json=payload, headers=headers, timeout=_gemini_timeout()
                 )
-                logger.warning("%s", last_error)
-                if res.status_code in (429, 503, 504):
+                if res.status_code == 400:
+                    last_error = RuntimeError(
+                        f"Gemini {model} HTTP 400: {_http_error_message(res)}"
+                    )
+                    logger.warning("%s", last_error)
+                    continue
+                if not res.ok:
+                    last_error = RuntimeError(
+                        f"Gemini {model} HTTP {res.status_code}: {_http_error_message(res)}"
+                    )
+                    logger.warning("%s", last_error)
+                    if res.status_code in (429, 503, 504):
+                        break
                     break
-                continue
-            return _extract_text(res.json()), model
-        except requests.Timeout:
-            last_error = RuntimeError(f"Gemini {model} timeout")
-            logger.warning("%s", last_error)
+                return _extract_text(res.json()), model
+            except requests.Timeout:
+                last_error = RuntimeError(f"Gemini {model} timeout")
+                logger.warning("%s", last_error)
+                break
+            except Exception as e:
+                last_error = e
+                logger.warning("Gemini %s error: %s", model, e)
+                break
+        else:
+            continue
+        if last_error and "timeout" in str(last_error).lower():
             break
-        except Exception as e:
-            last_error = e
-            logger.warning("Gemini %s error: %s", model, e)
+        if last_error and any(s in str(last_error) for s in ("429", "503", "504")):
+            break
     raise last_error or RuntimeError("Gemini failed")
 
 
