@@ -278,8 +278,32 @@ button:disabled,
   display: none;
 }
 
-.tab-content.active {
-  display: block;
+.voice-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  align-items: stretch;
+}
+
+.voice-row input {
+  flex: 1;
+  width: auto;
+  margin-top: 0;
+}
+
+.mic-btn {
+  flex: 0 0 48px;
+  margin: 0;
+  padding: 0;
+  font-size: 1.2rem;
+  background: #e2e8f0;
+  color: #1e293b;
+  border: none;
+  border-radius: 8px;
+}
+
+.mic-btn.listening {
+  background: #fecaca;
 }
 
 .footer {

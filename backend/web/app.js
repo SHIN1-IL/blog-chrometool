@@ -123,12 +123,12 @@
 
   function renderObstacles(type) {
     const box = document.getElementById("obstacleChecks");
-    if (type === "custom") {
-      box.innerHTML =
-        `<label class="full"><input type="text" id="obstacleCustom" placeholder="현장 고충을 직접 적어 주세요" /></label>`;
+    const items = OBSTACLES[type] || [];
+    if (items.length === 0) {
+      box.innerHTML = "";
       return;
     }
-    box.innerHTML = OBSTACLES[type]
+    box.innerHTML = items
       .map(
         ([v, label]) =>
           `<label><input type="checkbox" name="obstacle" value="${v}" /> ${label}</label>`
@@ -138,7 +138,6 @@
 
   function applyPlaceholders(type) {
     const p = PLACEHOLDERS[type] || PLACEHOLDERS.custom;
-    document.getElementById("orderDetail").placeholder = p.order;
     document.getElementById("issue").placeholder = p.issue;
     document.getElementById("process").placeholder = p.process;
     document.getElementById("equipment").placeholder = p.equipment;
@@ -260,15 +259,64 @@
   });
 
   function collectObstacles() {
-    const custom = document.getElementById("obstacleCustom");
-    if (custom) {
-      const v = custom.value.trim();
-      return v ? [v] : [];
-    }
-    return [...document.querySelectorAll('input[name="obstacle"]:checked')].map(
-      (el) => el.value
-    );
+    const checked = [
+      ...document.querySelectorAll('input[name="obstacle"]:checked'),
+    ].map((el) => el.value);
+    const other = (document.getElementById("obstacleOther")?.value || "").trim();
+    if (other) checked.push(other);
+    return checked;
   }
+
+  function bindVoiceInputs() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const hint = document.getElementById("voiceHint");
+    if (!SR) {
+      document.querySelectorAll(".mic-btn").forEach((b) => {
+        b.style.display = "none";
+      });
+      if (hint) {
+        hint.textContent =
+          "이 브라우저는 음성 입력을 지원하지 않습니다. PC·안드로이드 크롬을 이용해 주세요.";
+      }
+      return;
+    }
+    let active = null;
+    document.querySelectorAll(".mic-btn").forEach((btn) => {
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        const input = document.getElementById(btn.dataset.for);
+        if (!input) return;
+        if (active) {
+          try {
+            active.stop();
+          } catch {
+            /* ignore */
+          }
+          active = null;
+          document.querySelectorAll(".mic-btn").forEach((b) =>
+            b.classList.remove("listening")
+          );
+        }
+        const rec = new SR();
+        rec.lang = "ko-KR";
+        rec.interimResults = false;
+        rec.onresult = (e) => {
+          const said = e.results[0][0].transcript.trim();
+          input.value = input.value ? `${input.value} ${said}` : said;
+        };
+        rec.onend = () => {
+          btn.classList.remove("listening");
+          if (active === rec) active = null;
+        };
+        rec.onerror = () => btn.classList.remove("listening");
+        btn.classList.add("listening");
+        active = rec;
+        rec.start();
+      });
+    });
+  }
+
+  bindVoiceInputs();
 
   els.form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
@@ -286,7 +334,7 @@
         license_key: licenseKey,
         biz_type: els.bizType.value,
         company_name: document.getElementById("companyName").value.trim(),
-        order_detail: document.getElementById("orderDetail").value.trim(),
+        order_detail: "",
         location: document.getElementById("location").value.trim(),
         customer_impression: document.getElementById("customerImpression").value.trim(),
         weather: document.getElementById("weather").value,

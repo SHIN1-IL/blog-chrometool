@@ -61,7 +61,7 @@ def _openai_enabled() -> bool:
 
 def _clamp_photo(n: int) -> int:
     try:
-        return max(0, min(5, int(n)))
+        return max(0, min(10, int(n)))
     except (TypeError, ValueError):
         return 3
 
@@ -128,7 +128,6 @@ def build_prompt(
 [업체·현장 팩트]
 - 업체 종류: {biz_label}
 - 업체 이름: {company_name or "미기재"}
-- 주문 내용: {order_detail or "미기재"}
 - 작업 위치: {location}
 - 고객 인상: {customer_impression or "미기재"}
 - 당일 날씨: {weather or "미기재"}

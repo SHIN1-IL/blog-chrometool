@@ -70,7 +70,7 @@ class GenerateRequest(BaseModel):
     feeling: str = ""  # 완료기분
     extra: str = ""  # 기타사항
     tone: str = Field(min_length=1)
-    photo_count: int = Field(default=3, ge=0, le=5)
+    photo_count: int = Field(default=3, ge=0, le=10)
     video_count: int = Field(default=0, ge=0, le=1)
 
 

@@ -57,12 +57,12 @@ function renderBusinessNotice() {
 function renderObstacles(type) {
   const box = document.getElementById("obstacleChecks");
   if (!box) return;
-  if (type === "custom") {
-    box.innerHTML =
-      `<label class="full"><input type="text" id="obstacleCustom" placeholder="현장 고충을 직접 적어 주세요"></label>`;
+  const items = OBSTACLES[type] || [];
+  if (items.length === 0) {
+    box.innerHTML = "";
     return;
   }
-  box.innerHTML = OBSTACLES[type]
+  box.innerHTML = items
     .map(
       ([v, label]) =>
         `<label><input type="checkbox" value="${v}"> ${label}</label>`
@@ -72,14 +72,69 @@ function renderObstacles(type) {
 
 function applyPlaceholders(type) {
   const p = PLACEHOLDERS[type] || PLACEHOLDERS.custom;
-  const order = document.getElementById("orderDetail");
   const issue = document.getElementById("issue");
   const process = document.getElementById("process");
   const equipment = document.getElementById("equipment");
-  if (order) order.placeholder = p.order;
   if (issue) issue.placeholder = p.issue;
   if (process) process.placeholder = p.process;
   if (equipment) equipment.placeholder = p.equipment;
+}
+
+function collectObstacles() {
+  const checked = Array.from(
+    document.querySelectorAll("#obstacleChecks input[type='checkbox']:checked")
+  ).map((cb) => cb.value);
+  const other = (document.getElementById("obstacleOther")?.value || "").trim();
+  if (other) checked.push(other);
+  return checked;
+}
+
+function bindVoiceInputs() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const hint = document.getElementById("voiceHint");
+  if (!SR) {
+    document.querySelectorAll(".mic-btn").forEach((b) => {
+      b.style.display = "none";
+    });
+    if (hint) {
+      hint.textContent =
+        "이 브라우저는 음성 입력을 지원하지 않습니다. PC·안드로이드 크롬을 이용해 주세요.";
+    }
+    return;
+  }
+  let active = null;
+  document.querySelectorAll(".mic-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.for);
+      if (!input) return;
+      if (active) {
+        try {
+          active.stop();
+        } catch {
+          /* ignore */
+        }
+        active = null;
+        document.querySelectorAll(".mic-btn").forEach((b) => b.classList.remove("listening"));
+      }
+      const rec = new SR();
+      rec.lang = "ko-KR";
+      rec.interimResults = false;
+      rec.onresult = (ev) => {
+        const said = ev.results[0][0].transcript.trim();
+        input.value = input.value ? `${input.value} ${said}` : said;
+      };
+      rec.onend = () => {
+        btn.classList.remove("listening");
+        if (active === rec) active = null;
+      };
+      rec.onerror = () => {
+        btn.classList.remove("listening");
+      };
+      btn.classList.add("listening");
+      active = rec;
+      rec.start();
+    });
+  });
 }
 
 const els = {
@@ -202,23 +257,12 @@ async function verifyLicenseKey(key) {
   }
 }
 
-function collectObstacles() {
-  const custom = document.getElementById("obstacleCustom");
-  if (custom) {
-    const v = custom.value.trim();
-    return v ? [v] : [];
-  }
-  return Array.from(
-    document.querySelectorAll("#obstacleChecks input[type='checkbox']:checked")
-  ).map((cb) => cb.value);
-}
-
 function getFormPayload() {
   return {
     license_key: els.keyInput().value.trim(),
     biz_type: document.getElementById("bizType").value,
     company_name: document.getElementById("companyName").value.trim(),
-    order_detail: document.getElementById("orderDetail").value.trim(),
+    order_detail: "",
     location: document.getElementById("location").value.trim(),
     customer_impression: document.getElementById("customerImpression").value.trim(),
     weather: document.getElementById("weather").value,
@@ -302,6 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
   els.bankToggle().addEventListener("click", () => {
     els.bankNotice().classList.toggle("visible");
   });
+  bindVoiceInputs();
   chrome.storage.local.get(["licenseKey"], (result) => {
     const key = result.licenseKey || "";
     els.keyInput().value = key;
