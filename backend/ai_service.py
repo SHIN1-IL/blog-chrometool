@@ -12,9 +12,6 @@ logger = logging.getLogger(__name__)
 
 GEMINI_MODELS = [
     "gemini-3.8-flash",
-    "gemini-3.6-flash",
-    "gemini-3.5-flash",
-    "gemini-flash-latest",
 ]
 OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 OPENAI_MODEL = "gpt-4o-mini"
@@ -41,7 +38,7 @@ def _openai_key() -> str:
 
 
 def _gemini_timeout() -> float:
-    return float(os.getenv("GEMINI_TIMEOUT", "60"))
+    return float(os.getenv("GEMINI_TIMEOUT", "90"))
 
 
 def _openai_timeout() -> float:
@@ -49,7 +46,7 @@ def _openai_timeout() -> float:
 
 
 def _max_tokens() -> int:
-    return int(os.getenv("MAX_OUTPUT_TOKENS", "4000"))
+    return int(os.getenv("MAX_OUTPUT_TOKENS", "2500"))
 
 
 def _openai_enabled() -> bool:
@@ -150,17 +147,16 @@ def build_prompt(
 [채널 규칙]
 1) naver_blog
    - title: 지역 + 작업 + 결과 1줄
-   - content: 방문 계기→작업 순서. 사장님 소감 반영. 미디어 마커 준수
-   - tags: "#태그" 형식 8~12개
-2) daangn_post: 당근 비즈프로필 소식 4~6줄. 친근한 이모지. 과장·허위 가격 금지.
-   "오늘 {location} 다녀왔습니다" 형태로 요약. 사진은 완료 컷 1~2장만 쓰라고 마지막에 한 줄 안내.
+   - content: 400~700자. 방문 계기→작업 순서. 미디어 마커 준수
+   - tags: "#태그" 8개
+2) daangn_post: 4~6줄. 이모지. 허위 가격 금지. "오늘 {location} 다녀왔습니다"
 3) place_review
-   - customer_sms: 포토리뷰 부탁 문자 90~160자. 링크 자리 [플레이스링크]. 대필 금지(부탁만)
-   - place_keywords: # 없는 검색 키워드 5~8개
-   - place_news: 네이버지도 플레이스 소식 2~4줄. 사진 1장 권장 안내
+   - customer_sms: 90~140자. [플레이스링크]. 후기 부탁만
+   - place_keywords: 키워드 5개
+   - place_news: 2~3줄
 4) kakao
-   - customer_talk: 시공 직후 고객 카톡. 감사+불편 시 연락+후기 부담 없는 부탁. 완료 사진/15초 영상 있으면 같이 보내라는 한 줄
-   - channel_post: 카톡 채널/단골용 짧은 현장 소식 2~4줄
+   - customer_talk: 시공 직후 카톡 4~6줄
+   - channel_post: 채널 소식 2~3줄
 
 반드시 이 JSON만 출력:
 {{
@@ -287,6 +283,7 @@ def _call_gemini(prompt: str) -> tuple[str, str]:
             "maxOutputTokens": _max_tokens(),
             "responseMimeType": "application/json",
             "temperature": 0.7,
+            "thinkingConfig": {"thinkingBudget": 0},
         },
     }
 
@@ -299,19 +296,29 @@ def _call_gemini(prompt: str) -> tuple[str, str]:
             res = requests.post(
                 url, json=payload, headers=headers, timeout=_gemini_timeout()
             )
+            if res.status_code == 400:
+                slim = {
+                    "contents": payload["contents"],
+                    "generationConfig": {
+                        "maxOutputTokens": _max_tokens(),
+                        "responseMimeType": "application/json",
+                        "temperature": 0.7,
+                    },
+                }
+                res = requests.post(
+                    url, json=slim, headers=headers, timeout=_gemini_timeout()
+                )
             if not res.ok:
                 last_error = RuntimeError(
                     f"Gemini {model} HTTP {res.status_code}: {_http_error_message(res)}"
                 )
                 logger.warning("%s", last_error)
-                if res.status_code in (429, 503, 504):
-                    continue
                 continue
             return _extract_text(res.json()), model
         except requests.Timeout:
             last_error = RuntimeError(f"Gemini {model} timeout")
             logger.warning("%s", last_error)
-            continue
+            break
         except Exception as e:
             last_error = e
             logger.warning("Gemini %s error: %s", model, e)
@@ -354,6 +361,8 @@ def generate_channels(prompt: str) -> tuple[dict, str]:
                 raise
         logger.warning("[Fallback] Gemini failed (%s) -> GPT-4o-mini", e)
         if not _openai_enabled():
+            raise
+        if "timeout" in str(e).lower():
             raise
 
     try:

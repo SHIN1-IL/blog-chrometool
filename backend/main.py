@@ -199,7 +199,7 @@ def generate_post(req: GenerateRequest):
         elif "404" in message or "not found" in message.lower() or "no longer available" in message.lower():
             detail = "Gemini 모델 이름을 찾지 못했습니다. 서버 터미널의 Gemini 로그를 확인해 주세요."
         elif "timeout" in low or "timed out" in low:
-            detail = "AI 응답이 지연되었습니다. 잠시 후 다시 눌러 주세요."
+            detail = "Gemini가 시간 안에 글을 끝내지 못했습니다. 1분 뒤 한 번만 다시 눌러 주세요. (OpenAI 잔액이 없어 예비 엔진은 건너뜁니다)"
         elif "429" in message or "quota" in low:
             detail = "AI 사용 한도 문제입니다. Gemini는 AI Studio, 예비 엔진은 OpenAI 결제 화면을 확인해 주세요."
         else:

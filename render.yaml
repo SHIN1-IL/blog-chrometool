@@ -16,7 +16,7 @@ services:
       - key: OPENAI_ENABLED
         value: "true"
       - key: GEMINI_TIMEOUT
-        value: "60"
+        value: "90"
       - key: ADMIN_TOKEN
         sync: false
       # Free plan: no persistent disk. Use local file (resets on redeploy/sleep).
