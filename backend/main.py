@@ -186,14 +186,22 @@ def generate_post(req: GenerateRequest):
     except Exception as e:
         log_request(key, "/api/generate", model=model or None, success=False)
         message = str(e)
-        if "401" in message or "API_KEY_INVALID" in message or "API key" in message:
+        low = message.lower()
+        if "openai" in low and (
+            "credit" in low or "insufficient" in low or "openai http 429" in low
+        ):
+            if "timeout" in low or "gemini" in low:
+                detail = "Gemini 응답이 오래 걸렸고, 예비 엔진(OpenAI)은 잔액이 없습니다. 잠시 후 다시 시도해 주세요."
+            else:
+                detail = "예비 엔진(OpenAI) 잔액이 없습니다. platform.openai.com에서 크레딧을 충전하거나 Gemini만 사용하세요."
+        elif "401" in message or "API_KEY_INVALID" in message or "API key" in message:
             detail = "Gemini API 키가 올바르지 않습니다. Google AI Studio에서 키 다시 발급해 .env에 넣어 주세요."
         elif "404" in message or "not found" in message.lower() or "no longer available" in message.lower():
             detail = "Gemini 모델 이름을 찾지 못했습니다. 서버 터미널의 Gemini 로그를 확인해 주세요."
-        elif "429" in message or "quota" in message.lower():
-            detail = "AI 사용 한도 문제입니다. Google AI Studio 사용량/결제를 확인해 주세요."
-        elif "timeout" in message.lower():
+        elif "timeout" in low or "timed out" in low:
             detail = "AI 응답이 지연되었습니다. 잠시 후 다시 눌러 주세요."
+        elif "429" in message or "quota" in low:
+            detail = "AI 사용 한도 문제입니다. Gemini는 AI Studio, 예비 엔진은 OpenAI 결제 화면을 확인해 주세요."
         else:
             detail = "글 생성에 실패했습니다. 서버 터미널의 Gemini 로그를 확인해 주세요."
         raise HTTPException(status_code=500, detail=detail) from e
