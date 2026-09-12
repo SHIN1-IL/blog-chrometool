@@ -99,6 +99,28 @@
       "note": "친구 테스트 유료(로컬동기)",
       "created_at": "2026-09-10 07:09:06",
       "updated_at": "2026-09-10 07:09:06"
+    },
+    {
+      "license_key": "LB6R-CHFT-RY16",
+      "plan": "paid",
+      "expires_at": "2026-10-12",
+      "daily_limit": 3,
+      "monthly_limit": 90,
+      "status": "active",
+      "note": "고객 복구 키",
+      "created_at": "2026-09-12 01:49:57",
+      "updated_at": "2026-09-12 01:49:57"
+    },
+    {
+      "license_key": "S9AL-7CXG-IG5J",
+      "plan": "paid",
+      "expires_at": "2026-10-12",
+      "daily_limit": 3,
+      "monthly_limit": 90,
+      "status": "active",
+      "note": "고객 복구 키",
+      "created_at": "2026-09-12 01:49:57",
+      "updated_at": "2026-09-12 01:49:57"
     }
   ]
 }
