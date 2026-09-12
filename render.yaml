@@ -23,7 +23,10 @@ services:
       # Paid + Disk: set to /var/data/autoblog.db and attach disk at /var/data
       - key: DATABASE_PATH
         value: ./autoblog.db
-    # Uncomment when on a paid plan with persistent disk:
+      - key: LICENSE_VAULT_PATH
+        value: /var/data/licenses.vault.json
+    # Paid plan: uncomment disk so SQLite survives sleep/redeploy.
+    # Free plan: license keys are restored from backend/data/licenses.vault.json
     # disk:
     #   name: autoblog-data
     #   mountPath: /var/data

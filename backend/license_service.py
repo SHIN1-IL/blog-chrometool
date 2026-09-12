@@ -201,6 +201,7 @@ def mark_trial_exhausted(license_key: str) -> None:
             """,
             (license_key,),
         )
+    _persist_vault()
 
 
 def log_request(
@@ -256,7 +257,9 @@ def create_license(
             ),
         )
 
-    return get_license(key)
+    lic = get_license(key)
+    _persist_vault()
+    return lic
 
 
 def extend_license(license_key: str, days: int) -> dict:
@@ -278,7 +281,9 @@ def extend_license(license_key: str, days: int) -> dict:
             (new_expire, license_key),
         )
 
-    return get_license(license_key)
+    lic = get_license(license_key)
+    _persist_vault()
+    return lic
 
 
 def suspend_license(license_key: str) -> dict:
@@ -296,7 +301,9 @@ def suspend_license(license_key: str) -> dict:
             (license_key,),
         )
 
-    return get_license(license_key)
+    lic = get_license(license_key)
+    _persist_vault()
+    return lic
 
 
 def activate_license(license_key: str) -> dict:
@@ -314,7 +321,9 @@ def activate_license(license_key: str) -> dict:
             (license_key,),
         )
 
-    return get_license(license_key)
+    lic = get_license(license_key)
+    _persist_vault()
+    return lic
 
 
 def set_limits(
@@ -347,7 +356,9 @@ def set_limits(
             params,
         )
 
-    return get_license(license_key)
+    lic = get_license(license_key)
+    _persist_vault()
+    return lic
 
 
 def list_licenses() -> list[dict]:
@@ -384,6 +395,7 @@ def seed_admin_test_key() -> None:
                 """,
                 (defaults["daily_limit"], defaults["monthly_limit"], ADMIN_TEST_KEY),
             )
+        _persist_vault()
         return
     create_license(
         plan="admin_test",
@@ -396,3 +408,12 @@ def seed_admin_test_key() -> None:
 def seed_demo_key() -> None:
     """하위 호환: 예전 호출명 → 관리자 키 시드."""
     seed_admin_test_key()
+
+
+def _persist_vault() -> None:
+    try:
+        from license_vault import persist_vault
+
+        persist_vault()
+    except Exception as e:
+        print(f"[AutoBlog] vault persist failed: {e}", flush=True)

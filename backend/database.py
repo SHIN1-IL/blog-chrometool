@@ -7,23 +7,41 @@ _DEFAULT_DB = str(Path(__file__).parent / "autoblog.db")
 
 
 def _pick_db_path() -> str:
-    """Use DATABASE_PATH if writable; otherwise fall back (Render Free has no /var/data)."""
-    configured = os.getenv("DATABASE_PATH", _DEFAULT_DB)
-    path = Path(configured).expanduser()
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        probe = path.parent / ".autoblog_write_test"
-        probe.write_text("ok")
-        probe.unlink(missing_ok=True)
-        return str(path)
-    except OSError:
-        fallback = Path(_DEFAULT_DB)
-        fallback.parent.mkdir(parents=True, exist_ok=True)
-        print(
-            f"[AutoBlog] DATABASE_PATH unusable ({path}); using fallback {fallback}",
-            flush=True,
-        )
-        return str(fallback)
+    """Prefer a writable persistent disk, then DATABASE_PATH, then local file."""
+    candidates = []
+    configured = os.getenv("DATABASE_PATH", "").strip()
+    if configured:
+        candidates.append(configured)
+    candidates.extend(
+        [
+            "/var/data/autoblog.db",
+            _DEFAULT_DB,
+        ]
+    )
+    seen = set()
+    last_error = None
+    for configured_path in candidates:
+        if configured_path in seen:
+            continue
+        seen.add(configured_path)
+        path = Path(configured_path).expanduser()
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            probe = path.parent / ".autoblog_write_test"
+            probe.write_text("ok")
+            probe.unlink(missing_ok=True)
+            print(f"[AutoBlog] SQLite: {path}", flush=True)
+            return str(path)
+        except OSError as e:
+            last_error = e
+            continue
+    fallback = Path(_DEFAULT_DB)
+    fallback.parent.mkdir(parents=True, exist_ok=True)
+    print(
+        f"[AutoBlog] DATABASE_PATH unusable ({last_error}); using fallback {fallback}",
+        flush=True,
+    )
+    return str(fallback)
 
 
 DB_PATH = _pick_db_path()

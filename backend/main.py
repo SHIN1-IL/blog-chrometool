@@ -25,6 +25,7 @@ from license_service import (
     plan_label,
     seed_admin_test_key,
 )
+from license_vault import restore_vault
 
 WEB_DIR = Path(__file__).parent / "web"
 OPS_DIR = Path(__file__).parent / "ops"
@@ -33,6 +34,7 @@ OPS_DIR = Path(__file__).parent / "ops"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    restore_vault()
     seed_admin_test_key()
     yield
 

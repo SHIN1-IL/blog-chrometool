@@ -14,6 +14,7 @@ from license_service import (
     set_limits,
     suspend_license,
 )
+from license_vault import persist_vault, restore_vault, upsert_records
 
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "")
 
@@ -49,18 +50,13 @@ class AdminSetLimitRequest(BaseModel):
     monthly_limit: Optional[int] = Field(default=None, gt=0)
 
 
+class AdminImportRequest(BaseModel):
+    licenses: List[dict]
+
+
 @router.get("/licenses", dependencies=[Depends(require_admin)])
 def admin_list_licenses():
     return {"licenses": list_licenses()}
-
-
-@router.get("/licenses/{license_key}", dependencies=[Depends(require_admin)])
-def admin_get_license(license_key: str):
-    lic = get_license(license_key)
-    if not lic:
-        raise HTTPException(status_code=404, detail="라이선스를 찾을 수 없습니다.")
-    lic["plan_label"] = plan_label(lic.get("plan") or "")
-    return lic
 
 
 @router.post("/licenses", dependencies=[Depends(require_admin)])
@@ -78,6 +74,28 @@ def admin_create_license(req: AdminCreateRequest):
         return lic
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.post("/licenses/import", dependencies=[Depends(require_admin)])
+def admin_import_licenses(req: AdminImportRequest):
+    n = upsert_records(req.licenses)
+    persist_vault()
+    return {"imported": n, "licenses": list_licenses()}
+
+
+@router.post("/licenses/restore-vault", dependencies=[Depends(require_admin)])
+def admin_restore_vault():
+    n = restore_vault()
+    return {"restored": n, "licenses": list_licenses()}
+
+
+@router.get("/licenses/{license_key}", dependencies=[Depends(require_admin)])
+def admin_get_license(license_key: str):
+    lic = get_license(license_key)
+    if not lic:
+        raise HTTPException(status_code=404, detail="라이선스를 찾을 수 없습니다.")
+    lic["plan_label"] = plan_label(lic.get("plan") or "")
+    return lic
 
 
 @router.post("/licenses/{license_key}/extend", dependencies=[Depends(require_admin)])
