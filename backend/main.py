@@ -48,6 +48,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def allow_microphone(request, call_next):
+    response = await call_next(request)
+    response.headers["Permissions-Policy"] = "microphone=(self)"
+    return response
+
+
 app.include_router(admin_router)
 
 

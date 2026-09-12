@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "오토블로그 AI - 사장님 현장 일기",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "3분 체크로 끝내는 네이버 블로그 현장 작업 후기 반자동 작성",
   "icons": {
     "16": "icons/icon16.png",

@@ -89,50 +89,121 @@ function collectObstacles() {
   return checked;
 }
 
+function setVoiceHint(text) {
+  const hint = document.getElementById("voiceHint");
+  if (hint && text) hint.textContent = text;
+}
+
+function voiceErrorMessage(code) {
+  const map = {
+    "not-allowed":
+      "마이크가 차단되었습니다. 주소창 왼쪽 자물쇠에서 마이크를 허용한 뒤 다시 🎤를 눌러 주세요.",
+    "service-not-allowed":
+      "확장 패널에서 마이크가 막혀 있으면 https://blog-chrometool.onrender.com/app/ 에서 말해 주세요.",
+    "audio-capture":
+      "마이크를 찾을 수 없습니다. 노트북 마이크가 연결되어 있는지 확인해 주세요.",
+    "no-speech": "말이 인식되지 않았습니다. 🎤를 다시 누르고 말해 주세요.",
+    network: "음성 인식 연결에 실패했습니다. 인터넷 확인 후 다시 시도해 주세요.",
+    aborted: "",
+  };
+  return map[code] || "";
+}
+
+async function ensureMicrophone() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error("not-allowed");
+  }
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  stream.getTracks().forEach((t) => t.stop());
+}
+
 function bindVoiceInputs() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const hint = document.getElementById("voiceHint");
   if (!SR) {
     document.querySelectorAll(".mic-btn").forEach((b) => {
       b.style.display = "none";
     });
-    if (hint) {
-      hint.textContent =
-        "이 브라우저는 음성 입력을 지원하지 않습니다. PC·안드로이드 크롬을 이용해 주세요.";
-    }
+    setVoiceHint(
+      "이 브라우저는 음성 입력을 지원하지 않습니다. PC·안드로이드 크롬의 웹 주소에서 이용해 주세요."
+    );
     return;
   }
+  setVoiceHint(
+    "🎤 버튼을 누르고 말한 뒤, 끝나면 다시 눌러 중지하세요. 확장이 막히면 사이트(앱 주소)에서 말해 주세요."
+  );
   let active = null;
+  let activeBtn = null;
+
+  function stopActive() {
+    if (!active) return;
+    try {
+      active.stop();
+    } catch {
+      /* ignore */
+    }
+    active = null;
+    activeBtn = null;
+    document.querySelectorAll(".mic-btn").forEach((b) => b.classList.remove("listening"));
+  }
+
   document.querySelectorAll(".mic-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
       const input = document.getElementById(btn.dataset.for);
       if (!input) return;
       if (active) {
-        try {
-          active.stop();
-        } catch {
-          /* ignore */
-        }
-        active = null;
-        document.querySelectorAll(".mic-btn").forEach((b) => b.classList.remove("listening"));
+        const wasThis = activeBtn === btn;
+        stopActive();
+        if (wasThis) return;
+      }
+      try {
+        await ensureMicrophone();
+      } catch {
+        setVoiceHint(voiceErrorMessage("not-allowed"));
+        return;
       }
       const rec = new SR();
       rec.lang = "ko-KR";
-      rec.interimResults = false;
-      rec.onresult = (ev) => {
-        const said = ev.results[0][0].transcript.trim();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.onresult = (e) => {
+        let said = "";
+        for (let i = e.resultIndex; i < e.results.length; i += 1) {
+          if (e.results[i].isFinal) said += e.results[i][0].transcript;
+        }
+        said = said.trim();
+        if (!said) return;
         input.value = input.value ? `${input.value} ${said}` : said;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
       };
       rec.onend = () => {
         btn.classList.remove("listening");
-        if (active === rec) active = null;
+        if (active === rec) {
+          active = null;
+          activeBtn = null;
+        }
       };
-      rec.onerror = () => {
+      rec.onerror = (e) => {
+        const msg = voiceErrorMessage(e.error);
+        if (msg) setVoiceHint(msg);
         btn.classList.remove("listening");
+        if (active === rec) {
+          active = null;
+          activeBtn = null;
+        }
       };
       btn.classList.add("listening");
       active = rec;
-      rec.start();
+      activeBtn = btn;
+      try {
+        rec.start();
+      } catch {
+        stopActive();
+        setVoiceHint(
+          "확장에서는 마이크가 막힐 수 있습니다. https://blog-chrometool.onrender.com/app/ 에서 🎤를 눌러 주세요."
+        );
+      }
     });
   });
 }
