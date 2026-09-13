@@ -1,4 +1,32 @@
 let isLicenseValid = false;
+let channelsMode = "allin";
+
+function generateBtnLabel() {
+  return channelsMode === "blog" ? "🚀 오늘 현장 일기 만들기" : "🚀 오늘 현장 광고 만들기";
+}
+
+function applyChannelAccess(mode) {
+  channelsMode = mode === "blog" ? "blog" : "allin";
+  ["tab-daangn", "tab-place", "tab-kakao"].forEach((id) => {
+    const panel = document.getElementById(id);
+    const btn = document.querySelector(`.tab-btn[data-tab="${id}"]`);
+    const hide = channelsMode === "blog";
+    if (panel) panel.hidden = hide;
+    if (btn) btn.hidden = hide;
+  });
+  if (channelsMode === "blog") {
+    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+    const blogBtn = document.querySelector('.tab-btn[data-tab="tab-blog"]');
+    const blogPanel = document.getElementById("tab-blog");
+    if (blogBtn) blogBtn.classList.add("active");
+    if (blogPanel) blogPanel.classList.add("active");
+  }
+  const btn = document.getElementById("generateBtn");
+  if (btn && !String(btn.textContent).includes("작성 중")) {
+    btn.textContent = generateBtnLabel();
+  }
+}
 
 const OBSTACLES = {
   plumbing: [
@@ -40,17 +68,19 @@ const PLACEHOLDERS = {
 function renderBusinessNotice() {
   const el = document.getElementById("bankNotice");
   if (!el || typeof BUSINESS === "undefined") return;
-  const monthly = Number(BUSINESS.monthlyPrice || 24900).toLocaleString("ko-KR");
-  const yearly = Number(BUSINESS.yearlyPrice || 249000).toLocaleString("ko-KR");
-  const quarterly = Number(BUSINESS.quarterlyPrice || 69000).toLocaleString("ko-KR");
-  const legacy = Number(BUSINESS.legacyMonthlyPrice || 12900).toLocaleString("ko-KR");
+  const blogM = Number(BUSINESS.blogMonthlyPrice || BUSINESS.legacyMonthlyPrice || 12900).toLocaleString("ko-KR");
+  const blogS = Number(BUSINESS.blogSemiAnnualPrice || 64500).toLocaleString("ko-KR");
+  const blogY = Number(BUSINESS.blogYearlyPrice || 129000).toLocaleString("ko-KR");
+  const allinM = Number(BUSINESS.allinMonthlyPrice || BUSINESS.monthlyPrice || 24900).toLocaleString("ko-KR");
+  const allinS = Number(BUSINESS.allinSemiAnnualPrice || BUSINESS.semiAnnualPrice || 124500).toLocaleString("ko-KR");
+  const allinY = Number(BUSINESS.allinYearlyPrice || BUSINESS.yearlyPrice || 249000).toLocaleString("ko-KR");
   el.innerHTML = `
-    💳 <b>동네광고 올인원</b><br>
-    월 ${monthly}원 (30일) · 3개월 ${quarterly}원 · 연 ${yearly}원<br>
-    한 번 입력 → 블로그 · 당근 · 네이버지도 · 카톡 초안<br>
+    💳 <b>현장블로그 3분</b> · 하루 1건 · 달 30건<br>
+    월 ${blogM}원 · 6개월 ${blogS}원(1개월 할인) · 연 ${blogY}원(2개월 할인)<br>
+    💳 <b>동네광고 올인원</b> · 하루 3건 · 달 90건<br>
+    월 ${allinM}원 · 6개월 ${allinS}원(1개월 할인) · 연 ${allinY}원(2개월 할인)<br>
     ${BUSINESS.bankName} ${BUSINESS.accountNumber} (예금주: ${BUSINESS.accountHolder})<br>
-    입금자명=성함, 메모에 「올인원」 · 후 ${BUSINESS.contactMethod}(${BUSINESS.contact}) → ${BUSINESS.keyDeliveryMinutes}분 내 키<br>
-    <span style="color:#94a3b8;font-size:11px;">기존 월 ${legacy}원(블로그)은 연장만 가능합니다. 서버 첫 연결은 30초 걸릴 수 있습니다.</span>
+    입금자명=성함, 메모에 「블로그」또는 「올인원」 · 후 ${BUSINESS.contactMethod}(${BUSINESS.contact}) → ${BUSINESS.keyDeliveryMinutes}분 내 키
   `;
 }
 
@@ -251,7 +281,10 @@ function renderUsage(data) {
   card.classList.add("visible");
   els.usagePlan().textContent = data.plan_label || data.plan || "—";
   els.usageDays().textContent =
-    data.plan === "trial" || data.plan === "demo"
+    data.plan === "trial" ||
+    data.plan === "demo" ||
+    data.plan === "trial_blog" ||
+    data.plan === "trial_allin"
       ? "1건 사용 시 종료"
       : `D-${data.remaining_days ?? "?"}일`;
   const dailyRem =
@@ -281,6 +314,7 @@ function setBadgeActive(data) {
   isLicenseValid = true;
   els.generateBtn().disabled = dailyRem <= 0;
   renderUsage(data);
+  applyChannelAccess(data.channels === "blog" ? "blog" : "allin");
   showLicenseError(
     dailyRem <= 0
       ? `오늘 생성 한도(${data.daily_limit}건)를 모두 사용했습니다. 내일 다시 이용 가능합니다.`
@@ -467,7 +501,7 @@ els.generateBtn().addEventListener("click", async () => {
       await verifyLicenseKey(payload.license_key);
     }
   } finally {
-    btn.textContent = "🚀 오늘 현장 광고 만들기";
+    btn.textContent = generateBtnLabel();
     if (isLicenseValid) {
       btn.disabled = false;
     }

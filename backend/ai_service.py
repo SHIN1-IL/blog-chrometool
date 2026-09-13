@@ -115,6 +115,7 @@ def build_prompt(
     extra: str = "",
     photo_count: int = 3,
     video_count: int = 0,
+    channels_mode: str = "allin",
 ) -> str:
     photo_count = _clamp_photo(photo_count)
     video_count = _clamp_video(video_count)
@@ -123,9 +124,7 @@ def build_prompt(
     process_text = process or solution
     equipment_text = equipment or "미기재"
     media = _media_instructions(photo_count, video_count)
-    return f"""현장 팩트만 사용해 아래 4채널 초안을 한 번에 작성하세요.
-
-[업체·현장 팩트]
+    facts = f"""[업체·현장 팩트]
 - 업체 종류: {biz_label}
 - 업체 이름: {company_name or "미기재"}
 - 작업 위치: {location}
@@ -141,7 +140,29 @@ def build_prompt(
 - 문체 톤: {tone}
 
 [미디어]
-{media}
+{media}"""
+    if channels_mode == "blog":
+        return f"""현장 팩트만 사용해 네이버 블로그 초안만 작성하세요.
+
+{facts}
+
+[채널 규칙]
+naver_blog
+- title: 지역 + 작업 + 결과 1줄
+- content: 400~700자. 방문 계기→작업 순서. 미디어 마커 준수
+- tags: "#태그" 8개
+
+반드시 이 JSON만 출력:
+{{
+  "naver_blog": {{"title": "", "content": "", "tags": []}},
+  "daangn_post": "",
+  "place_review": {{"customer_sms": "", "place_keywords": [], "place_news": ""}},
+  "kakao": {{"customer_talk": "", "channel_post": ""}}
+}}
+"""
+    return f"""현장 팩트만 사용해 아래 4채널 초안을 한 번에 작성하세요.
+
+{facts}
 
 [채널 규칙]
 1) naver_blog

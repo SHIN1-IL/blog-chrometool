@@ -9,23 +9,45 @@ from database import get_db
 
 KST = ZoneInfo("Asia/Seoul")
 
-# 체험: 총 1건 후 종료 / 지인: 일1·월30·1달 / 유료: 일3·월90 / 관리자: 일3·월무제한
+# 체험: 총 1건 후 종료 / 지인: 30일 / 유료 블로그 1·30 / 유료 올인원 3·90 / 관리자 일3 월무제한
 PLAN_DEFAULTS = {
     "trial": {"daily_limit": 1, "monthly_limit": 1},
+    "trial_blog": {"daily_limit": 1, "monthly_limit": 1},
+    "trial_allin": {"daily_limit": 1, "monthly_limit": 1},
     "family_free": {"daily_limit": 1, "monthly_limit": 30},
+    "family_blog": {"daily_limit": 1, "monthly_limit": 30},
+    "family_allin": {"daily_limit": 3, "monthly_limit": 90},
     "paid": {"daily_limit": 3, "monthly_limit": 90},
+    "paid_blog": {"daily_limit": 1, "monthly_limit": 30},
+    "paid_allin": {"daily_limit": 3, "monthly_limit": 90},
     "admin_test": {"daily_limit": 3, "monthly_limit": 999999},
-    # 하위 호환 (구 DEMO-KEY)
     "demo": {"daily_limit": 1, "monthly_limit": 1},
 }
 
 PLAN_LABELS = {
     "trial": "체험플랜",
+    "trial_blog": "블로그 체험",
+    "trial_allin": "올인원 체험",
     "family_free": "지인플랜",
+    "family_blog": "블로그 지인",
+    "family_allin": "올인원 지인",
     "paid": "유료플랜",
+    "paid_blog": "현장블로그 3분",
+    "paid_allin": "동네광고 올인원",
     "admin_test": "관리자테스트",
     "demo": "체험플랜",
 }
+
+BLOG_ONLY_PLANS = frozenset({"paid_blog", "trial_blog", "family_blog"})
+TRIAL_PLANS = frozenset({"trial", "demo", "trial_blog", "trial_allin"})
+
+
+def is_blog_only_plan(plan: str) -> bool:
+    return (plan or "") in BLOG_ONLY_PLANS
+
+
+def is_trial_plan(plan: str) -> bool:
+    return (plan or "") in TRIAL_PLANS
 
 ADMIN_TEST_KEY = "ADMIN-TEST"
 
@@ -148,7 +170,7 @@ def check_quota(license_key: str) -> LicenseStatus:
 
     if status.monthly_used >= status.monthly_limit:
         msg = f"이번 달 생성 한도({status.monthly_limit}건)를 모두 사용했습니다."
-        if status.plan in ("trial", "demo"):
+        if status.plan in TRIAL_PLANS:
             msg = "체험이 종료되었습니다. 1건 사용을 모두 완료했습니다."
         return LicenseStatus(
             valid=False,
@@ -190,7 +212,7 @@ def increment_usage(license_key: str) -> None:
 def mark_trial_exhausted(license_key: str) -> None:
     """체험/구데모 키: 1건 사용 후 종료."""
     lic = get_license(license_key)
-    if not lic or lic["plan"] not in ("trial", "demo"):
+    if not lic or lic["plan"] not in TRIAL_PLANS:
         return
     with get_db() as conn:
         conn.execute(

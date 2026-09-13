@@ -32,7 +32,12 @@ def require_admin(x_admin_token: str = Header(..., alias="X-Admin-Token")):
 
 
 class AdminCreateRequest(BaseModel):
-    plan: str = Field(pattern="^(paid|family_free|trial|admin_test|demo)$")
+    plan: str = Field(
+        pattern=(
+            "^(paid|paid_blog|paid_allin|family_free|family_blog|family_allin|"
+            "trial|trial_blog|trial_allin|admin_test|demo)$"
+        )
+    )
     days: int = 0
     months: int = 0
     license_key: Optional[str] = None

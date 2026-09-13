@@ -20,6 +20,8 @@ from database import init_db
 from license_service import (
     check_license,
     increment_usage,
+    is_blog_only_plan,
+    is_trial_plan,
     log_request,
     mark_trial_exhausted,
     plan_label,
@@ -121,6 +123,7 @@ def _status_payload(status) -> dict:
         "monthly_limit": status.monthly_limit,
         "monthly_remaining": None if unlimited_monthly else monthly_remaining,
         "monthly_unlimited": unlimited_monthly,
+        "channels": "blog" if is_blog_only_plan(status.plan) else "allin",
     }
 
 
@@ -148,7 +151,7 @@ def generate_post(req: GenerateRequest):
 
     if status.monthly_used >= status.monthly_limit:
         detail = f"이번 달 생성 한도({status.monthly_limit}건)를 모두 사용했습니다."
-        if status.plan in ("trial", "demo"):
+        if is_trial_plan(status.plan):
             detail = "체험이 종료되었습니다. 1건 사용을 모두 완료했습니다."
         raise HTTPException(status_code=429, detail=detail)
 
@@ -179,6 +182,7 @@ def generate_post(req: GenerateRequest):
         tone=req.tone,
         photo_count=req.photo_count,
         video_count=req.video_count,
+        channels_mode="blog" if is_blog_only_plan(status.plan) else "allin",
     )
 
     model = ""
@@ -187,6 +191,17 @@ def generate_post(req: GenerateRequest):
         increment_usage(key)
         mark_trial_exhausted(key)
         log_request(key, "/api/generate", model=model, success=True)
+        if is_blog_only_plan(status.plan):
+            channels = {
+                "naver_blog": channels.get("naver_blog") or {},
+                "daangn_post": "",
+                "place_review": {
+                    "customer_sms": "",
+                    "place_keywords": [],
+                    "place_news": "",
+                },
+                "kakao": {"customer_talk": "", "channel_post": ""},
+            }
         return {
             **channels,
             "result": channels_to_legacy_result(channels),

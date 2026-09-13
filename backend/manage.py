@@ -7,6 +7,7 @@ import sys
 from database import init_db
 from license_service import (
     ADMIN_TEST_KEY,
+    PLAN_DEFAULTS,
     activate_license,
     create_license,
     extend_license,
@@ -99,7 +100,7 @@ def main() -> None:
     p_create.add_argument(
         "--plan",
         required=True,
-        choices=["paid", "family_free", "trial", "admin_test", "demo"],
+        choices=list(PLAN_DEFAULTS.keys()),
     )
     p_create.add_argument("--days", type=int, default=0)
     p_create.add_argument("--months", type=int, default=0)

@@ -6,34 +6,29 @@
 
 ## 1. 일일 운영 흐름
 
-### 1.1 유료 고객 (월 12,900원 / 30일 · 연 129,000원 / 365일)
+### 1.1 유료 고객
 
-1. 고객이 무통장 입금
-2. 카톡/문자로 입금자명·연락처 확인
-3. 라이선스 키 발급 (아래 CLI 또는 Admin API)
-4. 고객에게 키 문자/카톡 전달
-5. 고객이 모바일 웹 또는 Chrome 확장에서 [등록] 클릭
+- 현장블로그 3분: 월 12,900 · 6개월 64,500 · 연 129,000 (일 1 / 달 30)
+- 동네광고 올인원: 월 24,900 · 6개월 124,500 · 연 249,000 (일 3 / 달 90)
 
 ```bash
 cd backend
-# 월간
-python3 manage.py create --plan paid --days 30 --note "홍길동 월결"
-# 연간
-python3 manage.py create --plan paid --days 365 --note "홍길동 연결"
+python3 manage.py create --plan paid_blog --days 30 --note "홍길동 블로그"
+python3 manage.py create --plan paid_blog --days 180 --note "홍길동 블로그 6개월"
+python3 manage.py create --plan paid_allin --days 30 --note "홍길동 올인원"
+python3 manage.py create --plan paid_allin --days 365 --note "홍길동 올인원 연"
 ```
 
 ### 1.2 체험·지인·관리자
 
 ```bash
-# 체험 (총 1건, 사용 즉시 종료) — 키 자동 생성
-python3 manage.py create --plan trial --days 30 --note "홍길동 체험"
-
-# 지인 (일 1 · 월 30 · 1달 후 만료)
-python3 manage.py create --plan family_free --months 1 --note "사촌"
-
-# 관리자 고정키
+python3 manage.py create --plan trial_blog --days 30 --note "블로그 체험"
+python3 manage.py create --plan trial_allin --days 30 --note "올인원 체험"
+python3 manage.py create --plan family_blog --days 30 --note "블로그 지인"
+python3 manage.py create --plan family_allin --days 30 --note "올인원 지인"
 python3 manage.py seed
 # → ADMIN-TEST (일 3 · 월 무제한)
+# 기존 family_free 지인 키는 그대로 둠
 ```
 
 ### 1.3 반값·부분 입금 (할인)
@@ -75,9 +70,13 @@ python3 manage.py show --key XXXX-XXXX-XXXX
 
 | 플랜 | 코드 | 일일 | 월간 | 비고 |
 |------|------|------|------|------|
-| 체험 | trial | 1 | 1 | **1건 사용 즉시 종료** |
-| 지인 | family_free | 1 | 30 | 발급 후 1달 만료 |
-| 유료 | paid | 3 | 90 | 월 12,900 / 연 129,000 |
+| 체험 | trial / trial_blog / trial_allin | 1 | 1 | **1건 사용 즉시 종료** |
+| 지인(기존) | family_free | 1 | 30 | 이미 발급한 키는 유지 |
+| 블로그 지인 | family_blog | 1 | 30 | 신규 · 블로그만 · 30일 |
+| 올인원 지인 | family_allin | 3 | 90 | 신규 · 4채널 · 30일 |
+| 블로그 유료 | paid_blog | 1 | 30 | 월 12,900 / 6개월 64,500 / 연 129,000 |
+| 올인원 유료 | paid_allin | 3 | 90 | 월 24,900 / 6개월 124,500 / 연 249,000 |
+| 유료(구) | paid | 3 | 90 | 기존 발급분 유지 |
 | 관리자 | admin_test | 3 | 무제한 | 고정키 `ADMIN-TEST` |
 
 한도는 **백엔드에서만** 강제됩니다. 운영자가 `set-limit`으로 개별 조정 가능합니다.

@@ -61,6 +61,33 @@
 
   let licenseKey = localStorage.getItem("autoblog_license_key") || "";
   let isValid = false;
+  let channelsMode = "allin";
+
+  function generateBtnLabel() {
+    return channelsMode === "blog" ? "오늘 현장 일기 만들기" : "오늘 현장 광고 만들기";
+  }
+
+  function applyChannelAccess(mode) {
+    channelsMode = mode === "blog" ? "blog" : "allin";
+    ["tab-daangn", "tab-place", "tab-kakao"].forEach((id) => {
+      const panel = document.getElementById(id);
+      const btn = document.querySelector(`.tab-btn[data-tab="${id}"]`);
+      const hide = channelsMode === "blog";
+      if (panel) panel.hidden = hide;
+      if (btn) btn.hidden = hide;
+    });
+    if (channelsMode === "blog") {
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+      const blogBtn = document.querySelector('.tab-btn[data-tab="tab-blog"]');
+      const blogPanel = document.getElementById("tab-blog");
+      if (blogBtn) blogBtn.classList.add("active");
+      if (blogPanel) blogPanel.classList.add("active");
+    }
+    if (els.generateBtn && els.generateBtn.textContent.indexOf("생성 중") === -1) {
+      els.generateBtn.textContent = generateBtnLabel();
+    }
+  }
 
   if (licenseKey) {
     els.key.value = licenseKey;
@@ -89,7 +116,10 @@
     els.usageCard.hidden = false;
     els.usagePlan.textContent = data.plan_label || data.plan || "—";
     els.usageDays.textContent =
-      data.plan === "trial" || data.plan === "demo"
+      data.plan === "trial" ||
+      data.plan === "demo" ||
+      data.plan === "trial_blog" ||
+      data.plan === "trial_allin"
         ? "1건 사용 시 종료"
         : `D-${data.remaining_days ?? "?"}일`;
     const dailyRem =
@@ -108,17 +138,20 @@
 
   function renderBank(biz) {
     if (!biz) return;
-    const monthly = Number(biz.monthlyPrice || 24900).toLocaleString("ko-KR");
-    const yearly = Number(biz.yearlyPrice || 249000).toLocaleString("ko-KR");
-    const quarterly = Number(biz.quarterlyPrice || 69000).toLocaleString("ko-KR");
-    const legacy = Number(biz.legacyMonthlyPrice || 12900).toLocaleString("ko-KR");
+    const blogM = Number(biz.blogMonthlyPrice || biz.legacyMonthlyPrice || 12900).toLocaleString("ko-KR");
+    const blogS = Number(biz.blogSemiAnnualPrice || 64500).toLocaleString("ko-KR");
+    const blogY = Number(biz.blogYearlyPrice || 129000).toLocaleString("ko-KR");
+    const allinM = Number(biz.allinMonthlyPrice || biz.monthlyPrice || 24900).toLocaleString("ko-KR");
+    const allinS = Number(biz.allinSemiAnnualPrice || biz.semiAnnualPrice || 124500).toLocaleString("ko-KR");
+    const allinY = Number(biz.allinYearlyPrice || biz.yearlyPrice || 249000).toLocaleString("ko-KR");
     els.bankNotice.innerHTML =
-      `💳 <b>동네광고 올인원</b><br>` +
-      `월 ${monthly}원 · 3개월 ${quarterly}원 · 연 ${yearly}원<br>` +
-      `한 번 입력 → 블로그 · 당근 · 네이버지도 · 카톡<br>` +
+      `💳 <b>현장블로그 3분</b> · 하루 1건 · 달 30건<br>` +
+      `월 ${blogM}원 · 6개월 ${blogS}원(1개월 할인) · 연 ${blogY}원(2개월 할인)<br>` +
+      `💳 <b>동네광고 올인원</b> · 하루 3건 · 달 90건<br>` +
+      `월 ${allinM}원 · 6개월 ${allinS}원(1개월 할인) · 연 ${allinY}원(2개월 할인)<br>` +
       `${biz.bankName} ${biz.accountNumber} (예금주: ${biz.accountHolder})<br>` +
       `입금 후 ${biz.contactMethod}(${biz.contact}) → ${biz.keyDeliveryMinutes}분 내 키<br>` +
-      `<span style="color:#94a3b8;font-size:12px;">기존 월 ${legacy}원은 연장만. 서버 첫 연결 약 30초.</span>`;
+      `<span style="color:#94a3b8;font-size:12px;">입금 메모에 「블로그」또는 「올인원」을 적어 주세요.</span>`;
   }
 
   function renderObstacles(type) {
@@ -213,6 +246,7 @@
         `${data.plan_label || "구독"} · 오늘 남은 ${dailyRem}건`
       );
       renderUsage(data);
+      applyChannelAccess(data.channels === "blog" ? "blog" : "allin");
       showError(els.licenseError, "");
     } catch (e) {
       isValid = false;
@@ -432,7 +466,7 @@
       showError(els.genError, e.message || "생성 실패");
     } finally {
       els.generateBtn.disabled = !isValid;
-      els.generateBtn.textContent = "오늘 현장 광고 만들기";
+      els.generateBtn.textContent = generateBtnLabel();
     }
   });
 
