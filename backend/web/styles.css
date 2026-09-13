@@ -242,8 +242,21 @@ button:disabled,
   font-size: 0.8rem;
 }
 
-.hint {
-  margin: 8px 0 0;
+.req {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.form-notes {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #7f1d1d;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .result textarea {

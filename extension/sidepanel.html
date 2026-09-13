@@ -170,6 +170,17 @@
     }
     .mic-btn.listening { background: #fecaca; }
     #blogTitle, #blogTags, #placeKeywords { margin-bottom: 6px; }
+    .req { color: #dc2626; font-weight: 800; }
+    .form-notes {
+      margin: 10px 0 0;
+      padding: 8px 10px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: #7f1d1d;
+      font-size: 12px;
+      line-height: 1.4;
+    }
     .error-msg {
       color: #dc2626;
       font-size: 12px;
@@ -211,7 +222,7 @@
   <p class="hint-line" id="voiceHint">🎤 버튼을 누르고 말한 뒤, 끝나면 다시 눌러 중지하세요. PC는 마이크 허용이 필요합니다.</p>
 
   <div class="form-group">
-    <label for="bizType">1. 업체 종류 *</label>
+    <label for="bizType">1. 업체 종류 <span class="req">*</span></label>
     <select id="bizType">
       <option value="plumbing">설비업체</option>
       <option value="cleaning">청소업체</option>
@@ -228,7 +239,7 @@
   </div>
 
   <div class="form-group">
-    <label for="location">3. 현장위치 *</label>
+    <label for="location">3. 현장위치 <span class="req">*</span></label>
     <div class="voice-row">
       <input type="text" id="location" placeholder="예: 서초구 반포동 아파트">
       <button type="button" class="mic-btn" data-for="location" title="말로 입력">🎤</button>
@@ -255,7 +266,7 @@
   </div>
 
   <div class="form-group">
-    <label for="issue">6. 해결사항 *</label>
+    <label for="issue">6. 해결사항 <span class="req">*</span></label>
     <div class="voice-row">
       <input type="text" id="issue" placeholder="예: 싱크대 하부장 누수 및 곰팡이 냄새">
       <button type="button" class="mic-btn" data-for="issue" title="말로 입력">🎤</button>
@@ -272,7 +283,7 @@
   </div>
 
   <div class="form-group">
-    <label for="process">8. 해결과정 *</label>
+    <label for="process">8. 해결과정 <span class="req">*</span></label>
     <div class="voice-row">
       <input type="text" id="process" placeholder="예: 내시경 확인 후 주름관 교체">
       <button type="button" class="mic-btn" data-for="process" title="말로 입력">🎤</button>
@@ -337,7 +348,7 @@
   </div>
 
   <div class="form-group">
-    <label for="tone">15. 글 스타일 *</label>
+    <label for="tone">15. 글 스타일 <span class="req">*</span></label>
     <select id="tone">
       <option value="친절하고 꼼꼼한 전문가형">친절한 전문가형</option>
       <option value="현장감 넘치는 베테랑 일기형">베테랑 일기형</option>
@@ -346,6 +357,7 @@
   </div>
 
   <button id="generateBtn" disabled>🚀 오늘 현장 광고 만들기</button>
+  <p class="form-notes">※ 빨간색 <span class="req">*</span> 표시는 필수입니다. 업체 종류, 현장위치, 해결사항, 해결과정, 글 스타일을 채워 주세요. 나머지는 있으면 글이 더 좋아집니다.</p>
 
   <div id="resultSection" class="result-section">
     <div class="tab-container">
