@@ -132,8 +132,17 @@
     await loadList();
   }
 
-  async function enter() {
-    token = els.token.value.trim();
+  function cleanToken(raw) {
+    return String(raw || "")
+      .replace(/[\u200B-\u200D\uFEFF]/g, "")
+      .replace(/^["'\s]+|["'\s]+$/g, "")
+      .trim();
+  }
+
+  async function enter(ev) {
+    if (ev) ev.preventDefault();
+    token = cleanToken(els.token.value);
+    els.token.value = token;
     if (!token) {
       showErr("토큰을 입력해 주세요.");
       return;
@@ -157,7 +166,7 @@
     }
   }
 
-  els.loginBtn.addEventListener("click", enter);
+  document.getElementById("loginForm").addEventListener("submit", enter);
   document.getElementById("copyMsgBtn").addEventListener("click", async () => {
     const t = els.customerMsg.value;
     if (!t) return;
@@ -204,6 +213,7 @@
         await loadList();
         return;
       }
+      if (btn.dataset.act === "copy") {
         const lic = await admin(`/admin/licenses/${encodeURIComponent(key)}`);
         lic.plan_label = lic.plan_label || lic.plan;
         els.customerMsg.value = customerCopy(lic);

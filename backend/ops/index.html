@@ -12,11 +12,13 @@
   <p class="sub">관리자 전용 · 검색에 올리지 마세요</p>
 
   <section class="card" id="loginCard">
-    <label>ADMIN_TOKEN</label>
-    <div class="row">
-      <input type="password" id="token" autocomplete="off" placeholder=".env의 ADMIN_TOKEN" />
-      <button type="button" id="loginBtn">입장</button>
-    </div>
+    <form id="loginForm">
+      <label for="token">ADMIN_TOKEN</label>
+      <div class="row">
+        <input type="password" id="token" name="token" autocomplete="current-password" placeholder="Render Environment의 ADMIN_TOKEN" />
+        <button type="submit" id="loginBtn">입장</button>
+      </div>
+    </form>
     <p id="loginErr" class="err" hidden></p>
   </section>
 
@@ -70,6 +72,6 @@
       </div>
     </section>
   </div>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260914"></script>
 </body>
 </html>

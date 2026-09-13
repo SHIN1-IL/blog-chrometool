@@ -17,7 +17,7 @@ from license_service import (
 )
 from license_vault import persist_vault, restore_vault, upsert_records
 
-ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "")
+ADMIN_TOKEN = (os.getenv("ADMIN_TOKEN") or "").strip().strip('"').strip("'")
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -28,8 +28,12 @@ def require_admin(x_admin_token: str = Header(..., alias="X-Admin-Token")):
             status_code=503,
             detail="Admin API가 비활성화되어 있습니다. ADMIN_TOKEN 환경변수를 설정하세요.",
         )
-    if x_admin_token != ADMIN_TOKEN:
-        raise HTTPException(status_code=401, detail="인증 실패")
+    got = (x_admin_token or "").strip().strip('"').strip("'")
+    if got != ADMIN_TOKEN:
+        raise HTTPException(
+            status_code=401,
+            detail="인증 실패. Render Environment의 ADMIN_TOKEN과 같은지 확인하세요.",
+        )
 
 
 class AdminCreateRequest(BaseModel):
