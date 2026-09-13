@@ -7,17 +7,12 @@ _DEFAULT_DB = str(Path(__file__).parent / "autoblog.db")
 
 
 def _pick_db_path() -> str:
-    """Prefer a writable persistent disk, then DATABASE_PATH, then local file."""
-    candidates = []
+    """Prefer Render persistent disk (/var/data), then DATABASE_PATH, then local file."""
+    candidates = ["/var/data/autoblog.db"]
     configured = os.getenv("DATABASE_PATH", "").strip()
     if configured:
         candidates.append(configured)
-    candidates.extend(
-        [
-            "/var/data/autoblog.db",
-            _DEFAULT_DB,
-        ]
-    )
+    candidates.append(_DEFAULT_DB)
     seen = set()
     last_error = None
     for configured_path in candidates:

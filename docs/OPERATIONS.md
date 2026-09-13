@@ -165,11 +165,12 @@ curl https://your-app.onrender.com/admin/licenses \
 
 6. 배포 완료 후 `https://your-app.onrender.com/health` → `{"status":"ok"}` 확인
 
-### 4.3 무료 티어 주의사항
+### 4.3 Starter($7) + Disk
 
-- **콜드스타트:** 15분 비활성 후 첫 요청이 30~60초 걸릴 수 있음
-- 고객에게 "첫 로딩은 잠시 걸릴 수 있습니다" 안내
-- 트래픽 증가 시 유료 플랜 전환 검토
+- Compute를 Starter로 올리면 슬립이 줄어듭니다.
+- **Disk**를 `/var/data` (1GB)에 반드시 붙입니다. 안 붙이면 키 DB는 여전히 초기화될 수 있습니다.
+- 금고 파일에 있는 기존 키는 서버 시작 시 자동 복구됩니다. 고객이 키를 다시 받을 필요는 없습니다.
+- 로그에 `SQLite: /var/data/autoblog.db` 와 vault Permission denied 없음이 보이면 성공입니다.
 
 ### 4.4 Railway (대안)
 

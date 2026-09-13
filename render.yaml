@@ -19,15 +19,11 @@ services:
         value: "90"
       - key: ADMIN_TOKEN
         sync: false
-      # Free plan: no persistent disk. Use local file (resets on redeploy/sleep).
-      # Paid + Disk: set to /var/data/autoblog.db and attach disk at /var/data
       - key: DATABASE_PATH
-        value: ./autoblog.db
+        value: /var/data/autoblog.db
       - key: LICENSE_VAULT_PATH
         value: /var/data/licenses.vault.json
-    # Paid plan: uncomment disk so SQLite survives sleep/redeploy.
-    # Free plan: license keys are restored from backend/data/licenses.vault.json
-    # disk:
-    #   name: autoblog-data
-    #   mountPath: /var/data
-    #   sizeGB: 1
+    disk:
+      name: autoblog-data
+      mountPath: /var/data
+      sizeGB: 1
