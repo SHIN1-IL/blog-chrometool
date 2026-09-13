@@ -67,6 +67,13 @@
     ].join("\n");
   }
 
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;");
+  }
+
   async function loadList() {
     const data = await admin("/admin/licenses");
     const list = data.licenses || [];
@@ -74,17 +81,20 @@
       .map((lic) => {
         const key = lic.license_key;
         return `<tr>
-          <td><code>${key}</code></td>
-          <td>${lic.plan_label || lic.plan}</td>
-          <td>${lic.expires_at}</td>
-          <td>${lic.status}</td>
+          <td><code>${escapeHtml(key)}</code></td>
+          <td>${escapeHtml(lic.plan_label || lic.plan)}</td>
+          <td>${escapeHtml(lic.expires_at)}</td>
+          <td>${escapeHtml(lic.status)}</td>
           <td>${lic.daily_used ?? 0}/${lic.daily_limit}</td>
-          <td>${lic.note || ""}</td>
+          <td>
+            <input class="note-edit" data-key="${escapeHtml(key)}" value="${escapeHtml(lic.note || "")}" />
+          </td>
           <td class="actions">
-            <button type="button" data-act="copy" data-key="${key}">안내</button>
-            <button type="button" data-act="extend30" data-key="${key}">+30일</button>
-            <button type="button" data-act="suspend" data-key="${key}">정지</button>
-            <button type="button" data-act="activate" data-key="${key}">활성</button>
+            <button type="button" data-act="savenote" data-key="${escapeHtml(key)}">메모저장</button>
+            <button type="button" data-act="copy" data-key="${escapeHtml(key)}">안내</button>
+            <button type="button" data-act="extend30" data-key="${escapeHtml(key)}">+30일</button>
+            <button type="button" data-act="suspend" data-key="${escapeHtml(key)}">정지</button>
+            <button type="button" data-act="activate" data-key="${escapeHtml(key)}">활성</button>
           </td>
         </tr>`;
       })
@@ -159,12 +169,41 @@
   document.querySelectorAll("[data-issue]").forEach((btn) => {
     btn.addEventListener("click", () => issue(btn.dataset.issue).catch((e) => alert(e.message)));
   });
+  els.rows.addEventListener("keydown", async (ev) => {
+    if (ev.key !== "Enter") return;
+    const input = ev.target.closest(".note-edit");
+    if (!input) return;
+    ev.preventDefault();
+    const key = input.dataset.key;
+    try {
+      await admin(`/admin/licenses/${encodeURIComponent(key)}/note`, {
+        method: "PATCH",
+        body: JSON.stringify({ note: input.value }),
+      });
+      els.issueMsg.hidden = false;
+      els.issueMsg.textContent = `${key} 메모 저장됨`;
+      await loadList();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
   els.rows.addEventListener("click", async (ev) => {
     const btn = ev.target.closest("button[data-act]");
     if (!btn) return;
     const key = btn.dataset.key;
     try {
-      if (btn.dataset.act === "copy") {
+      if (btn.dataset.act === "savenote") {
+        const input = els.rows.querySelector(`.note-edit[data-key="${key}"]`);
+        const note = input ? input.value : "";
+        await admin(`/admin/licenses/${encodeURIComponent(key)}/note`, {
+          method: "PATCH",
+          body: JSON.stringify({ note }),
+        });
+        els.issueMsg.hidden = false;
+        els.issueMsg.textContent = `${key} 메모 저장됨`;
+        await loadList();
+        return;
+      }
         const lic = await admin(`/admin/licenses/${encodeURIComponent(key)}`);
         lic.plan_label = lic.plan_label || lic.plan;
         els.customerMsg.value = customerCopy(lic);

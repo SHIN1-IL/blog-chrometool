@@ -348,6 +348,24 @@ def activate_license(license_key: str) -> dict:
     return lic
 
 
+def set_note(license_key: str, note: str) -> dict:
+    lic = get_license(license_key)
+    if not lic:
+        raise ValueError(f"License not found: {license_key}")
+    with get_db() as conn:
+        conn.execute(
+            """
+            UPDATE licenses
+            SET note = ?, updated_at = datetime('now')
+            WHERE license_key = ?
+            """,
+            (note.strip() or None, license_key),
+        )
+    lic = get_license(license_key)
+    _persist_vault()
+    return lic
+
+
 def set_limits(
     license_key: str,
     daily_limit: Optional[int] = None,

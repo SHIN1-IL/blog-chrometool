@@ -12,6 +12,7 @@ from license_service import (
     list_licenses,
     plan_label,
     set_limits,
+    set_note,
     suspend_license,
 )
 from license_vault import persist_vault, restore_vault, upsert_records
@@ -53,6 +54,10 @@ class AdminExtendRequest(BaseModel):
 class AdminSetLimitRequest(BaseModel):
     daily_limit: Optional[int] = Field(default=None, gt=0)
     monthly_limit: Optional[int] = Field(default=None, gt=0)
+
+
+class AdminNoteRequest(BaseModel):
+    note: str = ""
 
 
 class AdminImportRequest(BaseModel):
@@ -123,6 +128,14 @@ def admin_suspend_license(license_key: str):
 def admin_activate_license(license_key: str):
     try:
         return activate_license(license_key)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
+
+@router.patch("/licenses/{license_key}/note", dependencies=[Depends(require_admin)])
+def admin_set_note(license_key: str, req: AdminNoteRequest):
+    try:
+        return set_note(license_key, req.note)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
 

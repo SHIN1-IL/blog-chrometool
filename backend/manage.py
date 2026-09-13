@@ -14,6 +14,7 @@ from license_service import (
     get_license,
     list_licenses,
     set_limits,
+    set_note,
     suspend_license,
     seed_admin_test_key,
 )
@@ -56,6 +57,11 @@ def cmd_activate(args: argparse.Namespace) -> None:
 def cmd_set_limit(args: argparse.Namespace) -> None:
     lic = set_limits(args.key, daily_limit=args.daily, monthly_limit=args.monthly)
     print(f"✅ 한도 변경: {lic['license_key']} → 일 {lic['daily_limit']} / 월 {lic['monthly_limit']}")
+
+
+def cmd_set_note(args: argparse.Namespace) -> None:
+    lic = set_note(args.key, args.note)
+    print(f"✅ 메모 변경: {lic['license_key']} → {lic.get('note') or '(없음)'}")
 
 
 def cmd_show(args: argparse.Namespace) -> None:
@@ -128,6 +134,11 @@ def main() -> None:
     p_limit.add_argument("--daily", type=int)
     p_limit.add_argument("--monthly", type=int)
     p_limit.set_defaults(func=cmd_set_limit)
+
+    p_note = sub.add_parser("set-note", help="메모 변경")
+    p_note.add_argument("--key", required=True)
+    p_note.add_argument("--note", default="")
+    p_note.set_defaults(func=cmd_set_note)
 
     p_show = sub.add_parser("show", help="라이선스 상세 조회")
     p_show.add_argument("--key", required=True)

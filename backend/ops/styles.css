@@ -2,7 +2,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
   margin: 0 auto;
   padding: 16px;
-  max-width: 960px;
+  max-width: 1100px;
   color: #1e293b;
   background: #f8fafc;
   font-size: 14px;
@@ -38,14 +38,45 @@ button {
   font-weight: 700;
   cursor: pointer;
 }
-button.secondary { background: #475569; }
-.grid {
+.card h2 { margin: 0 0 10px; font-size: 1rem; }
+.card h3 { margin: 0 0 8px; font-size: 0.92rem; }
+.issue-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 14px;
+  margin-bottom: 12px;
 }
-.grid button { margin: 0; font-size: 12px; }
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.col-blog {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.col-blog h3 { color: #15803d; }
+.col-allin {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+.col-allin h3 { color: #0369a1; }
+.col button { margin: 0; width: 100%; font-size: 13px; }
+button.btn-allin { background: #0ea5e9; }
+button.btn-allin:hover { background: #0284c7; }
+@media (max-width: 700px) {
+  .issue-cols { grid-template-columns: 1fr; }
+}
+.note-edit {
+  min-width: 140px;
+  margin: 0;
+  padding: 5px 6px;
+  font-size: 12px;
+}
+.actions button.btn-allin { background: #0ea5e9; }
 .err { color: #dc2626; }
 .ok { color: #15803d; font-weight: 600; }
 .table-wrap { overflow-x: auto; }
