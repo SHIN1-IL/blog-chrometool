@@ -16,7 +16,7 @@ const BUSINESS = {
   bankName: "하나은행",
   accountNumber: "365-910996-44807",
   accountHolder: "신일",
-  contact: "010-7237-1258",
+  contact: "070-8065-1258",
   contactMethod: "카톡/문자",
   keyDeliveryMinutes: 10,
   operatorName: "ACROSSTOOL",
