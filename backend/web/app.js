@@ -180,6 +180,7 @@
       `월 ${allinM}원 · 6개월 ${allinS}원(1개월 할인) · 연 ${allinY}원(2개월 할인)<br>` +
       `${biz.bankName} ${biz.accountNumber} (예금주: ${biz.accountHolder})<br>` +
       `입금 후 ${biz.contactMethod}(${biz.contact}) → ${biz.keyDeliveryMinutes}분 내 키<br>` +
+      `이메일 ${biz.contactEmail || "acrosstool@gmail.com"}<br>` +
       `<span style="color:#94a3b8;font-size:12px;">입금 메모에 「블로그」또는 「올인원」을 적어 주세요.</span>`;
   }
 

@@ -18,6 +18,7 @@ const BUSINESS = {
   accountHolder: "신일",
   contact: "070-8065-1258",
   contactMethod: "카톡/문자",
+  contactEmail: "acrosstool@gmail.com",
   keyDeliveryMinutes: 10,
   operatorName: "ACROSSTOOL",
 };

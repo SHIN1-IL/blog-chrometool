@@ -63,7 +63,7 @@
       "키 넣고 [등록] → 현장 입력 → 생성 후 복사",
       "사진·짧은 영상은 글에 자리가 나옵니다. 각 앱에서 직접 넣으세요.",
       "",
-      `구독 문의·연장은 ${biz?.contactMethod || "카톡"} ${biz?.contact || ""}`.trim(),
+      `구독 문의·연장은 ${biz?.contactMethod || "카톡"} ${biz?.contact || ""} / ${biz?.contactEmail || "acrosstool@gmail.com"}`.trim(),
     ].join("\n");
   }
 

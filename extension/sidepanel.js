@@ -83,7 +83,8 @@ function renderBusinessNotice() {
     💳 <b>동네광고 올인원</b> · 하루 3건 · 달 90건<br>
     월 ${allinM}원 · 6개월 ${allinS}원(1개월 할인) · 연 ${allinY}원(2개월 할인)<br>
     ${BUSINESS.bankName} ${BUSINESS.accountNumber} (예금주: ${BUSINESS.accountHolder})<br>
-    입금자명=성함, 메모에 「블로그」또는 「올인원」 · 후 ${BUSINESS.contactMethod}(${BUSINESS.contact}) → ${BUSINESS.keyDeliveryMinutes}분 내 키
+    입금자명=성함, 메모에 「블로그」또는 「올인원」 · 후 ${BUSINESS.contactMethod}(${BUSINESS.contact}) → ${BUSINESS.keyDeliveryMinutes}분 내 키<br>
+    이메일 ${BUSINESS.contactEmail || "acrosstool@gmail.com"}
   `;
 }
 

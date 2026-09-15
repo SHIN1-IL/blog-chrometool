@@ -20,6 +20,7 @@ def get_business_info() -> dict:
         "accountHolder": os.getenv("BUSINESS_ACCOUNT_HOLDER", "신일"),
         "contact": os.getenv("BUSINESS_CONTACT", "070-8065-1258"),
         "contactMethod": os.getenv("BUSINESS_CONTACT_METHOD", "카톡/문자"),
+        "contactEmail": os.getenv("BUSINESS_CONTACT_EMAIL", "acrosstool@gmail.com"),
         "keyDeliveryMinutes": int(os.getenv("BUSINESS_KEY_DELIVERY_MINUTES", "10")),
         "operatorName": os.getenv("BUSINESS_OPERATOR_NAME", "ACROSSTOOL"),
     }

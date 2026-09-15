@@ -17,6 +17,7 @@ const BUSINESS = {
   accountHolder: "홍길동",           // 예금주
   contact: "010-1234-5678",         // 연락처
   contactMethod: "카톡/문자",        // 연락 방법
+  contactEmail: "acrosstool@gmail.com",
   keyDeliveryMinutes: 10,           // 키 발급 소요 시간 (분)
   operatorName: "ACROSSTOOL",
 };
