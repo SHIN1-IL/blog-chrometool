@@ -17,6 +17,8 @@ services:
         value: "true"
       - key: GEMINI_TIMEOUT
         value: "90"
+      - key: MAX_OUTPUT_TOKENS
+        value: "4000"
       - key: ADMIN_TOKEN
         sync: false
       - key: DATABASE_PATH
