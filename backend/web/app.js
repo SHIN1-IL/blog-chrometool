@@ -55,6 +55,7 @@
     generateBtn: document.getElementById("generateBtn"),
     genError: document.getElementById("genError"),
     resultSection: document.getElementById("resultSection"),
+    resultEmptyHint: document.getElementById("resultEmptyHint"),
     modelTag: document.getElementById("modelTag"),
     copyMsg: document.getElementById("copyMsg"),
   };
@@ -64,6 +65,19 @@
   let channelsMode = "allin";
   let generating = false;
   let lastGenerateFingerprint = "";
+  const pcLayout = window.matchMedia("(min-width: 1024px)");
+
+  function syncPcResultPane() {
+    const empty = !lastGenerateFingerprint;
+    if (els.resultEmptyHint) els.resultEmptyHint.hidden = !empty;
+    if (pcLayout.matches) {
+      els.resultSection.hidden = false;
+      els.resultSection.classList.toggle("is-empty", empty);
+      return;
+    }
+    els.resultSection.classList.remove("is-empty");
+    if (empty) els.resultSection.hidden = true;
+  }
 
   function generateBtnLabel() {
     return channelsMode === "blog" ? "오늘 현장 일기 만들기" : "오늘 현장 광고 만들기";
@@ -482,15 +496,17 @@
     }
     const body = collectGenerateBody();
     const fingerprint = generateFingerprint(body);
-    if (fingerprint === lastGenerateFingerprint && !els.resultSection.hidden) {
+    if (fingerprint === lastGenerateFingerprint && lastGenerateFingerprint) {
       showError(els.genError, "");
       els.copyMsg.hidden = false;
       els.copyMsg.textContent =
-        "같은 내용입니다. 한도가 다시 차감되지 않습니다. 아래 글을 복사해 주세요.";
-      els.resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        "같은 내용입니다. 한도가 다시 차감되지 않습니다. 오른쪽 글을 복사해 주세요.";
+      if (!pcLayout.matches) {
+        els.resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
       return;
     }
-    if (!els.resultSection.hidden && lastGenerateFingerprint) {
+    if (lastGenerateFingerprint) {
       const ok = window.confirm(
         "이미 만든 글이 있습니다. 다시 만들면 오늘 한도가 1건 차감됩니다. 계속할까요?"
       );
@@ -507,7 +523,10 @@
       lastGenerateFingerprint = fingerprint;
       els.resultSection.hidden = false;
       applyChannels(data);
-      els.resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      syncPcResultPane();
+      if (!pcLayout.matches) {
+        els.resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
       await verify(true);
     } catch (e) {
       showError(els.genError, e.message || "생성 실패");
@@ -570,4 +589,10 @@
 
   loadBusiness();
   if (licenseKey) verify(true);
+  if (pcLayout.addEventListener) {
+    pcLayout.addEventListener("change", syncPcResultPane);
+  } else if (pcLayout.addListener) {
+    pcLayout.addListener(syncPcResultPane);
+  }
+  syncPcResultPane();
 })();

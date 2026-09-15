@@ -351,14 +351,14 @@ button:disabled,
     padding: 24px 28px 56px;
   }
 
-  .workspace:has(#resultSection:not([hidden])) {
+  .workspace {
     display: grid;
     grid-template-columns: minmax(340px, 1fr) minmax(360px, 1.05fr);
     gap: 16px;
     align-items: start;
   }
 
-  .workspace:has(#resultSection:not([hidden])) .result {
+  .result {
     position: sticky;
     top: 16px;
     max-height: calc(100vh - 32px);
@@ -366,12 +366,14 @@ button:disabled,
     margin-bottom: 0;
   }
 
-  .workspace:not(:has(#resultSection:not([hidden]))) {
-    max-width: 640px;
-    margin-inline: auto;
-  }
-
   .result textarea {
     min-height: 220px;
+  }
+
+  .result.is-empty .tab-container,
+  .result.is-empty .tab-content,
+  .result.is-empty .model,
+  .result.is-empty .ok {
+    opacity: 0.55;
   }
 }
