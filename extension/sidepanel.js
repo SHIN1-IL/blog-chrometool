@@ -1,5 +1,8 @@
 let isLicenseValid = false;
 let channelsMode = "allin";
+let generating = false;
+let lastGenerateFingerprint = "";
+let hasGenerateResult = false;
 
 function generateBtnLabel() {
   return channelsMode === "blog" ? "🚀 오늘 현장 일기 만들기" : "🚀 오늘 현장 광고 만들기";
@@ -463,7 +466,13 @@ els.verifyBtn().addEventListener("click", () => {
   verifyLicenseKey(els.keyInput().value.trim());
 });
 
+function generateFingerprint(payload) {
+  const { license_key, ...rest } = payload;
+  return JSON.stringify(rest);
+}
+
 els.generateBtn().addEventListener("click", async () => {
+  if (generating) return;
   if (!isLicenseValid) {
     alert("라이선스 인증이 필요합니다.");
     return;
@@ -476,7 +485,20 @@ els.generateBtn().addEventListener("click", async () => {
     return;
   }
 
+  const fingerprint = generateFingerprint(payload);
+  if (hasGenerateResult && fingerprint === lastGenerateFingerprint) {
+    alert("같은 내용입니다. 한도가 다시 차감되지 않습니다. 아래 글을 복사해 주세요.");
+    return;
+  }
+  if (hasGenerateResult) {
+    const ok = window.confirm(
+      "이미 만든 글이 있습니다. 다시 만들면 오늘 한도가 1건 차감됩니다. 계속할까요?"
+    );
+    if (!ok) return;
+  }
+
   const btn = els.generateBtn();
+  generating = true;
   btn.disabled = true;
   btn.textContent = "⏳ AI가 작성 중입니다...";
 
@@ -494,6 +516,8 @@ els.generateBtn().addEventListener("click", async () => {
     }
 
     applyChannels(data);
+    lastGenerateFingerprint = fingerprint;
+    hasGenerateResult = true;
     await verifyLicenseKey(payload.license_key);
   } catch (err) {
     alert("오류: " + err.message);
@@ -501,6 +525,7 @@ els.generateBtn().addEventListener("click", async () => {
       await verifyLicenseKey(payload.license_key);
     }
   } finally {
+    generating = false;
     btn.textContent = generateBtnLabel();
     if (isLicenseValid) {
       btn.disabled = false;

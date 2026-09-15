@@ -62,6 +62,8 @@
   let licenseKey = localStorage.getItem("autoblog_license_key") || "";
   let isValid = false;
   let channelsMode = "allin";
+  let generating = false;
+  let lastGenerateFingerprint = "";
 
   function generateBtnLabel() {
     return channelsMode === "blog" ? "오늘 현장 일기 만들기" : "오늘 현장 광고 만들기";
@@ -427,37 +429,65 @@
 
   bindVoiceInputs();
 
+  function collectGenerateBody() {
+    return {
+      license_key: licenseKey,
+      biz_type: els.bizType.value,
+      company_name: document.getElementById("companyName").value.trim(),
+      order_detail: "",
+      location: document.getElementById("location").value.trim(),
+      customer_impression: document.getElementById("customerImpression").value.trim(),
+      weather: document.getElementById("weather").value,
+      issue: document.getElementById("issue").value.trim(),
+      obstacles: collectObstacles(),
+      process: document.getElementById("process").value.trim(),
+      equipment: document.getElementById("equipment").value.trim(),
+      customer_reaction: document.getElementById("customerReaction").value.trim(),
+      feeling: document.getElementById("feeling").value.trim(),
+      extra: document.getElementById("extra").value.trim(),
+      tone: document.getElementById("tone").value,
+      photo_count: Number(document.getElementById("photoCount").value || 3),
+      video_count: Number(document.getElementById("videoCount").value || 0),
+    };
+  }
+
+  function generateFingerprint(body) {
+    const { license_key, ...rest } = body;
+    return JSON.stringify(rest);
+  }
+
   els.form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
+    if (generating) return;
     if (!isValid || !licenseKey) {
       showError(els.genError, "먼저 라이선스 키를 등록해 주세요.");
       return;
     }
+    const body = collectGenerateBody();
+    const fingerprint = generateFingerprint(body);
+    if (fingerprint === lastGenerateFingerprint && !els.resultSection.hidden) {
+      showError(els.genError, "");
+      els.copyMsg.hidden = false;
+      els.copyMsg.textContent =
+        "같은 내용입니다. 한도가 다시 차감되지 않습니다. 아래 글을 복사해 주세요.";
+      els.resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (!els.resultSection.hidden && lastGenerateFingerprint) {
+      const ok = window.confirm(
+        "이미 만든 글이 있습니다. 다시 만들면 오늘 한도가 1건 차감됩니다. 계속할까요?"
+      );
+      if (!ok) return;
+    }
     showError(els.genError, "");
     els.copyMsg.hidden = true;
+    generating = true;
     els.generateBtn.disabled = true;
     els.generateBtn.textContent = "생성 중… (최대 1분)";
 
     try {
-      const data = await api("/api/generate", {
-        license_key: licenseKey,
-        biz_type: els.bizType.value,
-        company_name: document.getElementById("companyName").value.trim(),
-        order_detail: "",
-        location: document.getElementById("location").value.trim(),
-        customer_impression: document.getElementById("customerImpression").value.trim(),
-        weather: document.getElementById("weather").value,
-        issue: document.getElementById("issue").value.trim(),
-        obstacles: collectObstacles(),
-        process: document.getElementById("process").value.trim(),
-        equipment: document.getElementById("equipment").value.trim(),
-        customer_reaction: document.getElementById("customerReaction").value.trim(),
-        feeling: document.getElementById("feeling").value.trim(),
-        extra: document.getElementById("extra").value.trim(),
-        tone: document.getElementById("tone").value,
-        photo_count: Number(document.getElementById("photoCount").value || 3),
-        video_count: Number(document.getElementById("videoCount").value || 0),
-      });
+      const data = await api("/api/generate", body);
+      lastGenerateFingerprint = fingerprint;
       els.resultSection.hidden = false;
       applyChannels(data);
       els.resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -465,6 +495,7 @@
     } catch (e) {
       showError(els.genError, e.message || "생성 실패");
     } finally {
+      generating = false;
       els.generateBtn.disabled = !isValid;
       els.generateBtn.textContent = generateBtnLabel();
     }

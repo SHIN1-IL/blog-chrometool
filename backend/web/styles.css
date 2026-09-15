@@ -291,6 +291,10 @@ button:disabled,
   display: none;
 }
 
+.tab-content.active {
+  display: block;
+}
+
 .voice-row {
   display: flex;
   gap: 8px;
