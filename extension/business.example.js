@@ -18,4 +18,5 @@ const BUSINESS = {
   contact: "010-1234-5678",         // 연락처
   contactMethod: "카톡/문자",        // 연락 방법
   keyDeliveryMinutes: 10,           // 키 발급 소요 시간 (분)
+  operatorName: "ACROSSTOOL",
 };

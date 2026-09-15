@@ -21,4 +21,5 @@ def get_business_info() -> dict:
         "contact": os.getenv("BUSINESS_CONTACT", "010-7237-1258"),
         "contactMethod": os.getenv("BUSINESS_CONTACT_METHOD", "카톡/문자"),
         "keyDeliveryMinutes": int(os.getenv("BUSINESS_KEY_DELIVERY_MINUTES", "10")),
+        "operatorName": os.getenv("BUSINESS_OPERATOR_NAME", "ACROSSTOOL"),
     }

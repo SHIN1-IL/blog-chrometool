@@ -774,3 +774,10 @@ els.injectBtn().addEventListener("click", async () => {
     btn.textContent = "📝 네이버 에디터로 보내기";
   }
 });
+
+(() => {
+  const a = document.getElementById("privacyLink");
+  if (a && typeof BACKEND_URL === "string") {
+    a.href = `${BACKEND_URL.replace(/\/$/, "")}/privacy`;
+  }
+})();

@@ -325,7 +325,17 @@ button:disabled,
 
 .footer {
   text-align: center;
-  margin-top: 8px;
+  margin-top: 16px;
+}
+
+.footer.legal p {
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+.footer.legal a {
+  color: #15803d;
+  text-decoration: none;
 }
 
 @media (min-width: 600px) {

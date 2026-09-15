@@ -138,6 +138,19 @@
     }
   }
 
+  function renderLegal(biz) {
+    const line = document.getElementById("legalLine");
+    if (!line || !biz) return;
+    const name = biz.operatorName || "ACROSSTOOL";
+    const method = biz.contactMethod || "카톡/문자";
+    const contact = biz.contact || "";
+    line.textContent = name;
+    const extra = line.nextElementSibling;
+    if (extra) {
+      extra.innerHTML = `<a href="/privacy">개인정보 처리방침</a> · 문의 ${method} ${contact}`.trim();
+    }
+  }
+
   function renderBank(biz) {
     if (!biz) return;
     const blogM = Number(biz.blogMonthlyPrice || biz.legacyMonthlyPrice || 12900).toLocaleString("ko-KR");
@@ -209,7 +222,11 @@
   async function loadBusiness() {
     try {
       const res = await fetch(`${API_BASE}/api/business`);
-      if (res.ok) renderBank(await res.json());
+      if (res.ok) {
+        const biz = await res.json();
+        renderBank(biz);
+        renderLegal(biz);
+      }
     } catch {
       /* optional */
     }

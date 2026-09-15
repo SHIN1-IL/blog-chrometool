@@ -5,7 +5,7 @@ from typing import List
 import env_loader  # noqa: F401
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -99,6 +99,11 @@ def business():
 @app.get("/")
 def root():
     return RedirectResponse(url="/app/")
+
+
+@app.get("/privacy")
+def privacy_policy():
+    return FileResponse(WEB_DIR / "privacy.html")
 
 
 @app.get("/ops")
