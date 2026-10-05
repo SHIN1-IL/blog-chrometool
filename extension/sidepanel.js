@@ -246,6 +246,7 @@ const els = {
   badge: () => document.getElementById("licenseBadge"),
   usageCard: () => document.getElementById("usageCard"),
   usagePlan: () => document.getElementById("usagePlan"),
+  usageStart: () => document.getElementById("usageStart"),
   usageDays: () => document.getElementById("usageDays"),
   usageDaily: () => document.getElementById("usageDaily"),
   usageMonthly: () => document.getElementById("usageMonthly"),
@@ -284,6 +285,10 @@ function renderUsage(data) {
   const card = els.usageCard();
   card.classList.add("visible");
   els.usagePlan().textContent = data.plan_label || data.plan || "—";
+  const startEl = els.usageStart();
+  if (startEl) {
+    startEl.textContent = data.started_at ? String(data.started_at).slice(0, 10) : "—";
+  }
   els.usageDays().textContent =
     data.plan === "trial" ||
     data.plan === "demo" ||

@@ -63,6 +63,8 @@ class LicenseStatus:
     daily_limit: int = 0
     monthly_used: int = 0
     monthly_limit: int = 0
+    started_at: str = ""
+    duration_days: int = 0
 
 
 def plan_label(plan: str) -> str:
@@ -117,8 +119,31 @@ def get_license(license_key: str) -> Optional[dict]:
     return dict(row) if row else None
 
 
-def check_license(license_key: str) -> LicenseStatus:
+def _begin_plan_if_needed(license_key: str) -> Optional[dict]:
+    """기간은 고객이 처음 등록하는 날부터 시작한다."""
     lic = get_license(license_key)
+    if not lic or lic.get("started_at"):
+        return lic
+    duration = lic.get("duration_days")
+    if not duration:
+        return lic
+    start = today_kst()
+    expires = (start + timedelta(days=int(duration))).isoformat()
+    with get_db() as conn:
+        conn.execute(
+            """
+            UPDATE licenses
+            SET started_at = ?, expires_at = ?, updated_at = datetime('now')
+            WHERE license_key = ? AND started_at IS NULL
+            """,
+            (start.isoformat(), expires, license_key),
+        )
+    _persist_vault()
+    return get_license(license_key)
+
+
+def check_license(license_key: str) -> LicenseStatus:
+    lic = _begin_plan_if_needed(license_key)
     if not lic:
         return LicenseStatus(valid=False, message="등록되지 않았거나 만료된 라이선스입니다.")
 
@@ -147,6 +172,8 @@ def check_license(license_key: str) -> LicenseStatus:
         daily_limit=lic["daily_limit"],
         monthly_used=monthly_used,
         monthly_limit=lic["monthly_limit"],
+        started_at=str(lic.get("started_at") or ""),
+        duration_days=int(lic.get("duration_days") or 0),
     )
 
 
@@ -258,7 +285,6 @@ def create_license(
         raise ValueError("days or months must be positive")
 
     total_days = days + months * 30
-    expires_at = (today_kst() + timedelta(days=total_days)).isoformat()
     defaults = PLAN_DEFAULTS[plan]
 
     key = license_key or generate_license_key()
@@ -266,16 +292,17 @@ def create_license(
         conn.execute(
             """
             INSERT INTO licenses (
-                license_key, plan, expires_at, daily_limit, monthly_limit, note
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                license_key, plan, expires_at, daily_limit, monthly_limit, note,
+                duration_days, started_at
+            ) VALUES (?, ?, '2099-12-31', ?, ?, ?, ?, NULL)
             """,
             (
                 key,
                 plan,
-                expires_at,
                 daily_limit if daily_limit is not None else defaults["daily_limit"],
                 monthly_limit if monthly_limit is not None else defaults["monthly_limit"],
                 note,
+                total_days,
             ),
         )
 
@@ -289,19 +316,29 @@ def extend_license(license_key: str, days: int) -> dict:
     if not lic:
         raise ValueError(f"License not found: {license_key}")
 
-    current_expire = _parse_date(lic["expires_at"])
-    base = max(current_expire, today_kst())
-    new_expire = (base + timedelta(days=days)).isoformat()
-
     with get_db() as conn:
-        conn.execute(
-            """
-            UPDATE licenses
-            SET expires_at = ?, status = 'active', updated_at = datetime('now')
-            WHERE license_key = ?
-            """,
-            (new_expire, license_key),
-        )
+        if not lic.get("started_at"):
+            duration = int(lic.get("duration_days") or 0) + days
+            conn.execute(
+                """
+                UPDATE licenses
+                SET duration_days = ?, status = 'active', updated_at = datetime('now')
+                WHERE license_key = ?
+                """,
+                (duration, license_key),
+            )
+        else:
+            current_expire = _parse_date(lic["expires_at"])
+            base = max(current_expire, today_kst())
+            new_expire = (base + timedelta(days=days)).isoformat()
+            conn.execute(
+                """
+                UPDATE licenses
+                SET expires_at = ?, status = 'active', updated_at = datetime('now')
+                WHERE license_key = ?
+                """,
+                (new_expire, license_key),
+            )
 
     lic = get_license(license_key)
     _persist_vault()
@@ -359,7 +396,7 @@ def set_note(license_key: str, note: str) -> dict:
             SET note = ?, updated_at = datetime('now')
             WHERE license_key = ?
             """,
-            (note.strip() or None, license_key),
+            (note.strip(), license_key),
         )
     lic = get_license(license_key)
     _persist_vault()
@@ -399,6 +436,28 @@ def set_limits(
     lic = get_license(license_key)
     _persist_vault()
     return lic
+
+
+PAID_PLANS = frozenset({"paid", "paid_blog", "paid_allin"})
+
+
+def delete_paid_licenses() -> list[str]:
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT license_key FROM licenses
+            WHERE plan IN ('paid', 'paid_blog', 'paid_allin')
+            """
+        ).fetchall()
+        keys = [row["license_key"] for row in rows]
+        for key in keys:
+            conn.execute("DELETE FROM usage_daily WHERE license_key = ?", (key,))
+            conn.execute("DELETE FROM usage_monthly WHERE license_key = ?", (key,))
+            conn.execute("DELETE FROM request_logs WHERE license_key = ?", (key,))
+            conn.execute("DELETE FROM licenses WHERE license_key = ?", (key,))
+    if keys:
+        _persist_vault()
+    return keys
 
 
 def list_licenses() -> list[dict]:

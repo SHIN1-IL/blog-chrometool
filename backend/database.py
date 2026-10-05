@@ -62,6 +62,22 @@ def get_db():
         conn.close()
 
 
+def _ensure_license_columns(conn: sqlite3.Connection) -> None:
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(licenses)")}
+    if "started_at" not in cols:
+        conn.execute("ALTER TABLE licenses ADD COLUMN started_at TEXT")
+    if "duration_days" not in cols:
+        conn.execute("ALTER TABLE licenses ADD COLUMN duration_days INTEGER")
+    conn.execute(
+        """
+        UPDATE licenses
+        SET started_at = substr(created_at, 1, 10)
+        WHERE started_at IS NULL
+          AND (duration_days IS NULL OR duration_days = 0)
+        """
+    )
+
+
 def init_db() -> None:
     with get_db() as conn:
         conn.executescript(
@@ -104,3 +120,4 @@ def init_db() -> None:
             );
             """
         )
+        _ensure_license_columns(conn)

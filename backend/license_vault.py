@@ -42,6 +42,8 @@ def _row_to_record(row: Any) -> dict:
         "note": row["note"],
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
+        "started_at": row["started_at"] if "started_at" in row.keys() else None,
+        "duration_days": row["duration_days"] if "duration_days" in row.keys() else None,
     }
 
 
@@ -104,8 +106,8 @@ def upsert_records(records: list[dict]) -> int:
                 """
                 INSERT INTO licenses (
                     license_key, plan, expires_at, daily_limit, monthly_limit,
-                    status, note, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')), COALESCE(?, datetime('now')))
+                    status, note, created_at, updated_at, started_at, duration_days
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')), COALESCE(?, datetime('now')), ?, ?)
                 ON CONFLICT(license_key) DO UPDATE SET
                     plan = excluded.plan,
                     expires_at = excluded.expires_at,
@@ -113,6 +115,8 @@ def upsert_records(records: list[dict]) -> int:
                     monthly_limit = excluded.monthly_limit,
                     status = excluded.status,
                     note = COALESCE(excluded.note, licenses.note),
+                    started_at = COALESCE(excluded.started_at, licenses.started_at),
+                    duration_days = COALESCE(excluded.duration_days, licenses.duration_days),
                     updated_at = datetime('now')
                 """,
                 (
@@ -125,6 +129,8 @@ def upsert_records(records: list[dict]) -> int:
                     rec.get("note"),
                     rec.get("created_at"),
                     rec.get("updated_at"),
+                    rec.get("started_at"),
+                    rec.get("duration_days"),
                 ),
             )
             count += 1

@@ -42,6 +42,7 @@
     badge: document.getElementById("licenseBadge"),
     usageCard: document.getElementById("usageCard"),
     usagePlan: document.getElementById("usagePlan"),
+    usageStart: document.getElementById("usageStart"),
     usageDays: document.getElementById("usageDays"),
     usageDaily: document.getElementById("usageDaily"),
     usageMonthly: document.getElementById("usageMonthly"),
@@ -131,6 +132,9 @@
   function renderUsage(data) {
     els.usageCard.hidden = false;
     els.usagePlan.textContent = data.plan_label || data.plan || "—";
+    els.usageStart.textContent = data.started_at
+      ? String(data.started_at).slice(0, 10)
+      : "—";
     els.usageDays.textContent =
       data.plan === "trial" ||
       data.plan === "demo" ||

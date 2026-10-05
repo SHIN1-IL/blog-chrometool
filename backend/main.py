@@ -37,6 +37,16 @@ OPS_DIR = Path(__file__).parent / "ops"
 async def lifespan(app: FastAPI):
     init_db()
     restore_vault()
+    from database import DB_PATH, _ensure_license_columns, get_db
+    from license_service import delete_paid_licenses
+
+    with get_db() as conn:
+        _ensure_license_columns(conn)
+    marker = Path(DB_PATH).parent / ".purged-paid-v1"
+    if not marker.exists():
+        removed = delete_paid_licenses()
+        marker.write_text("ok\n", encoding="utf-8")
+        print(f"[AutoBlog] removed paid licenses once: {len(removed)}", flush=True)
     seed_admin_test_key()
     yield
 
@@ -129,6 +139,8 @@ def _status_payload(status) -> dict:
         "monthly_remaining": None if unlimited_monthly else monthly_remaining,
         "monthly_unlimited": unlimited_monthly,
         "channels": "blog" if is_blog_only_plan(status.plan) else "allin",
+        "started_at": status.started_at,
+        "duration_days": status.duration_days,
     }
 
 

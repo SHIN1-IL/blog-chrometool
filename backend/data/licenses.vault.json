@@ -2,17 +2,6 @@
   "version": 1,
   "licenses": [
     {
-      "license_key": "RH4H-I945-6EHW",
-      "plan": "paid",
-      "expires_at": "2026-10-02",
-      "daily_limit": 3,
-      "monthly_limit": 90,
-      "status": "active",
-      "note": "테스트 고객",
-      "created_at": "2026-09-02 12:23:02",
-      "updated_at": "2026-09-05 14:45:52"
-    },
-    {
       "license_key": "DEMO-KEY",
       "plan": "demo",
       "expires_at": "2027-09-02",
@@ -21,17 +10,6 @@
       "status": "suspended",
       "note": "개발·체험용 데모 키",
       "created_at": "2026-09-02 12:23:08",
-      "updated_at": "2026-09-05 14:45:51"
-    },
-    {
-      "license_key": "3YJ5-X5OF-RKAM",
-      "plan": "paid",
-      "expires_at": "2026-10-02",
-      "daily_limit": 3,
-      "monthly_limit": 90,
-      "status": "active",
-      "note": "api test",
-      "created_at": "2026-09-02 12:32:20",
       "updated_at": "2026-09-05 14:45:51"
     },
     {
@@ -68,17 +46,6 @@
       "updated_at": "2026-09-05 14:45:47"
     },
     {
-      "license_key": "JH6X-G6WS-2H4M",
-      "plan": "paid",
-      "expires_at": "2026-10-05",
-      "daily_limit": 3,
-      "monthly_limit": 90,
-      "status": "active",
-      "note": "샘플유료월",
-      "created_at": "2026-09-05 14:45:47",
-      "updated_at": "2026-09-05 14:45:47"
-    },
-    {
       "license_key": "WBKS-7HF4-BJDT",
       "plan": "family_free",
       "expires_at": "2026-10-10",
@@ -88,39 +55,6 @@
       "note": "샘플지인2",
       "created_at": "2026-09-10 04:20:53",
       "updated_at": "2026-09-10 04:20:53"
-    },
-    {
-      "license_key": "MYDY-QU4G-Z4HX",
-      "plan": "paid",
-      "expires_at": "2026-10-10",
-      "daily_limit": 3,
-      "monthly_limit": 90,
-      "status": "active",
-      "note": "친구 테스트 유료(로컬동기)",
-      "created_at": "2026-09-10 07:09:06",
-      "updated_at": "2026-09-10 07:09:06"
-    },
-    {
-      "license_key": "LB6R-CHFT-RY16",
-      "plan": "paid",
-      "expires_at": "2026-10-12",
-      "daily_limit": 3,
-      "monthly_limit": 90,
-      "status": "active",
-      "note": "고객 복구 키",
-      "created_at": "2026-09-12 01:49:57",
-      "updated_at": "2026-09-12 01:49:57"
-    },
-    {
-      "license_key": "S9AL-7CXG-IG5J",
-      "plan": "paid",
-      "expires_at": "2026-10-12",
-      "daily_limit": 3,
-      "monthly_limit": 90,
-      "status": "active",
-      "note": "고객 복구 키",
-      "created_at": "2026-09-12 01:49:57",
-      "updated_at": "2026-09-12 01:49:57"
     }
   ]
 }

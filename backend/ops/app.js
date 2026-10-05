@@ -54,7 +54,8 @@
       `키: ${lic.license_key}`,
       `상품: ${product}`,
       `플랜: ${lic.plan_label || lic.plan}`,
-      `기간: ${lic.expires_at} 까지`,
+      `시작: ${startText(lic) === "미시작" ? "고객이 처음 등록하는 날" : startText(lic)}`,
+      `기간: ${endText(lic)}`,
       `한도: 일 ${lic.daily_limit}건 / 달 ${lic.monthly_limit}건`,
       features,
       priceHint,
@@ -65,6 +66,16 @@
       "",
       `구독 문의·연장은 ${biz?.contactMethod || "카톡"} ${biz?.contact || ""} / ${biz?.contactEmail || "acrosstool@gmail.com"}`.trim(),
     ].join("\n");
+  }
+
+  function startText(lic) {
+    if (lic.started_at) return String(lic.started_at).slice(0, 10);
+    return "미시작";
+  }
+
+  function endText(lic) {
+    if (!lic.started_at && lic.duration_days) return `등록 후 ${lic.duration_days}일`;
+    return lic.expires_at || "—";
   }
 
   function escapeHtml(s) {
@@ -83,14 +94,17 @@
         return `<tr>
           <td><code>${escapeHtml(key)}</code></td>
           <td>${escapeHtml(lic.plan_label || lic.plan)}</td>
-          <td>${escapeHtml(lic.expires_at)}</td>
+          <td>${escapeHtml(startText(lic))}</td>
+          <td>${escapeHtml(endText(lic))}</td>
           <td>${escapeHtml(lic.status)}</td>
           <td>${lic.daily_used ?? 0}/${lic.daily_limit}</td>
-          <td>
-            <input class="note-edit" data-key="${escapeHtml(key)}" value="${escapeHtml(lic.note || "")}" />
+          <td class="note-cell">
+            <input class="note-edit" value="${escapeHtml(lic.note || "")}" />
+            <span class="note-state"></span>
           </td>
           <td class="actions">
-            <button type="button" data-act="savenote" data-key="${escapeHtml(key)}">메모저장</button>
+            <button type="button" data-act="editnote" data-key="${escapeHtml(key)}">수정</button>
+            <button type="button" data-act="savenote" data-key="${escapeHtml(key)}">저장</button>
             <button type="button" data-act="copy" data-key="${escapeHtml(key)}">안내</button>
             <button type="button" data-act="extend30" data-key="${escapeHtml(key)}">+30일</button>
             <button type="button" data-act="suspend" data-key="${escapeHtml(key)}">정지</button>
@@ -178,20 +192,36 @@
   document.querySelectorAll("[data-issue]").forEach((btn) => {
     btn.addEventListener("click", () => issue(btn.dataset.issue).catch((e) => alert(e.message)));
   });
+  async function saveNote(key, row) {
+    const input = row.querySelector(".note-edit");
+    const note = input ? input.value : "";
+    const saved = await admin(`/admin/licenses/${encodeURIComponent(key)}/note`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    });
+    if (input) input.value = saved.note ?? note;
+    const state = row.querySelector(".note-state");
+    if (state) state.textContent = "저장됨";
+    els.issueMsg.hidden = false;
+    els.issueMsg.textContent = `${key} 메모 저장됨`;
+  }
+
+  els.rows.addEventListener("input", (ev) => {
+    const input = ev.target.closest(".note-edit");
+    if (!input) return;
+    const state = input.closest("tr")?.querySelector(".note-state");
+    if (state) state.textContent = "";
+  });
   els.rows.addEventListener("keydown", async (ev) => {
     if (ev.key !== "Enter") return;
     const input = ev.target.closest(".note-edit");
     if (!input) return;
     ev.preventDefault();
-    const key = input.dataset.key;
+    const row = input.closest("tr");
+    const key = row?.querySelector("button[data-act='savenote']")?.dataset.key;
+    if (!key || !row) return;
     try {
-      await admin(`/admin/licenses/${encodeURIComponent(key)}/note`, {
-        method: "PATCH",
-        body: JSON.stringify({ note: input.value }),
-      });
-      els.issueMsg.hidden = false;
-      els.issueMsg.textContent = `${key} 메모 저장됨`;
-      await loadList();
+      await saveNote(key, row);
     } catch (e) {
       alert(e.message);
     }
@@ -200,17 +230,18 @@
     const btn = ev.target.closest("button[data-act]");
     if (!btn) return;
     const key = btn.dataset.key;
+    const row = btn.closest("tr");
     try {
+      if (btn.dataset.act === "editnote") {
+        const input = row?.querySelector(".note-edit");
+        if (input) {
+          input.focus();
+          input.select();
+        }
+        return;
+      }
       if (btn.dataset.act === "savenote") {
-        const input = els.rows.querySelector(`.note-edit[data-key="${key}"]`);
-        const note = input ? input.value : "";
-        await admin(`/admin/licenses/${encodeURIComponent(key)}/note`, {
-          method: "PATCH",
-          body: JSON.stringify({ note }),
-        });
-        els.issueMsg.hidden = false;
-        els.issueMsg.textContent = `${key} 메모 저장됨`;
-        await loadList();
+        await saveNote(key, row);
         return;
       }
       if (btn.dataset.act === "copy") {

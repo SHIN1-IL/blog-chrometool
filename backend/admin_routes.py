@@ -136,7 +136,11 @@ def admin_activate_license(license_key: str):
         raise HTTPException(status_code=404, detail=str(e)) from e
 
 
-@router.patch("/licenses/{license_key}/note", dependencies=[Depends(require_admin)])
+@router.api_route(
+    "/licenses/{license_key}/note",
+    methods=["POST", "PATCH"],
+    dependencies=[Depends(require_admin)],
+)
 def admin_set_note(license_key: str, req: AdminNoteRequest):
     try:
         return set_note(license_key, req.note)
