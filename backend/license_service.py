@@ -26,14 +26,14 @@ PLAN_DEFAULTS = {
 
 PLAN_LABELS = {
     "trial": "체험플랜",
-    "trial_blog": "블로그 체험",
-    "trial_allin": "올인원 체험",
+    "trial_blog": "스탠다드 체험",
+    "trial_allin": "프리미엄 체험",
     "family_free": "지인플랜",
-    "family_blog": "블로그 지인",
-    "family_allin": "올인원 지인",
+    "family_blog": "스탠다드 지인",
+    "family_allin": "프리미엄 지인",
     "paid": "유료플랜",
-    "paid_blog": "현장블로그 3분",
-    "paid_allin": "동네광고 올인원",
+    "paid_blog": "스탠다드",
+    "paid_allin": "프리미엄",
     "admin_test": "관리자테스트",
     "demo": "체험플랜",
 }

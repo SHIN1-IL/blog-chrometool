@@ -8,24 +8,24 @@
 
 ### 1.1 유료 고객
 
-- 현장블로그 3분: 월 12,900 · 6개월 64,500 · 연 129,000 (일 1 / 달 30)
-- 동네광고 올인원: 월 24,900 · 6개월 124,500 · 연 249,000 (일 3 / 달 90)
+- 스탠다드: 월 12,900 · 6개월 64,500 · 연 129,000 (일 1 / 달 30, 네이버 블로그만)
+- 프리미엄: 월 24,900 · 6개월 124,500 · 연 249,000 (일 3 / 달 90, 블로그·당근·지도·카톡)
 
 ```bash
 cd backend
-python3 manage.py create --plan paid_blog --days 30 --note "홍길동 블로그"
-python3 manage.py create --plan paid_blog --days 180 --note "홍길동 블로그 6개월"
-python3 manage.py create --plan paid_allin --days 30 --note "홍길동 올인원"
-python3 manage.py create --plan paid_allin --days 365 --note "홍길동 올인원 연"
+python3 manage.py create --plan paid_blog --days 30 --note "홍길동 스탠다드"
+python3 manage.py create --plan paid_blog --days 180 --note "홍길동 스탠다드 6개월"
+python3 manage.py create --plan paid_allin --days 30 --note "홍길동 프리미엄"
+python3 manage.py create --plan paid_allin --days 365 --note "홍길동 프리미엄 연"
 ```
 
 ### 1.2 체험·지인·관리자
 
 ```bash
-python3 manage.py create --plan trial_blog --days 30 --note "블로그 체험"
-python3 manage.py create --plan trial_allin --days 30 --note "올인원 체험"
-python3 manage.py create --plan family_blog --days 30 --note "블로그 지인"
-python3 manage.py create --plan family_allin --days 30 --note "올인원 지인"
+python3 manage.py create --plan trial_blog --days 30 --note "스탠다드 체험"
+python3 manage.py create --plan trial_allin --days 30 --note "프리미엄 체험"
+python3 manage.py create --plan family_blog --days 30 --note "스탠다드 지인"
+python3 manage.py create --plan family_allin --days 30 --note "프리미엄 지인"
 python3 manage.py seed
 # → ADMIN-TEST (일 3 · 월 무제한)
 # 기존 family_free 지인 키는 그대로 둠
@@ -36,9 +36,10 @@ python3 manage.py seed
 MVP에서는 자동 계산 없이, 입금액에 비례해 연장 일수를 수동 적용합니다.
 
 ```
-연장 일수 = floor(입금액 ÷ 12,900 × 30)
+스탠다드 연장 일수 = floor(입금액 ÷ 12,900 × 30)
+프리미엄 연장 일수 = floor(입금액 ÷ 24,900 × 30)
 
-예) 6,450원 입금 → 15일 연장
+예) 스탠다드 6,450원 입금 → 15일 연장
 python3 manage.py extend --key XXXX-XXXX-XXXX --days 15
 ```
 
@@ -72,10 +73,10 @@ python3 manage.py show --key XXXX-XXXX-XXXX
 |------|------|------|------|------|
 | 체험 | trial / trial_blog / trial_allin | 1 | 1 | **1건 사용 즉시 종료** |
 | 지인(기존) | family_free | 1 | 30 | 이미 발급한 키는 유지 |
-| 블로그 지인 | family_blog | 1 | 30 | 신규 · 블로그만 · 30일 |
-| 올인원 지인 | family_allin | 3 | 90 | 신규 · 4채널 · 30일 |
-| 블로그 유료 | paid_blog | 1 | 30 | 월 12,900 / 6개월 64,500 / 연 129,000 |
-| 올인원 유료 | paid_allin | 3 | 90 | 월 24,900 / 6개월 124,500 / 연 249,000 |
+| 스탠다드 지인 | family_blog | 1 | 30 | 신규 · 블로그만 · 30일 |
+| 프리미엄 지인 | family_allin | 3 | 90 | 신규 · 4채널 · 30일 |
+| 스탠다드 | paid_blog | 1 | 30 | 월 12,900 / 6개월 64,500 / 연 129,000 |
+| 프리미엄 | paid_allin | 3 | 90 | 월 24,900 / 6개월 124,500 / 연 249,000 |
 | 유료(구) | paid | 3 | 90 | 기존 발급분 유지 |
 | 관리자 | admin_test | 3 | 무제한 | 고정키 `ADMIN-TEST` |
 
@@ -95,7 +96,7 @@ ADMIN_TOKEN=your_long_random_secret_here
 ### 3.1 라이선스 발급
 
 ```bash
-curl -X POST https://your-app.onrender.com/admin/licenses \
+curl -X POST https://blog-chrometool.onrender.com/admin/licenses \
   -H "Content-Type: application/json" \
   -H "X-Admin-Token: your_long_random_secret_here" \
   -d '{
@@ -108,7 +109,7 @@ curl -X POST https://your-app.onrender.com/admin/licenses \
 ### 3.2 연장
 
 ```bash
-curl -X POST https://your-app.onrender.com/admin/licenses/XXXX-XXXX-XXXX/extend \
+curl -X POST https://blog-chrometool.onrender.com/admin/licenses/XXXX-XXXX-XXXX/extend \
   -H "Content-Type: application/json" \
   -H "X-Admin-Token: your_long_random_secret_here" \
   -d '{"days": 30}'
@@ -117,17 +118,17 @@ curl -X POST https://your-app.onrender.com/admin/licenses/XXXX-XXXX-XXXX/extend 
 ### 3.3 정지 / 활성화
 
 ```bash
-curl -X POST https://your-app.onrender.com/admin/licenses/XXXX-XXXX-XXXX/suspend \
+curl -X POST https://blog-chrometool.onrender.com/admin/licenses/XXXX-XXXX-XXXX/suspend \
   -H "X-Admin-Token: your_long_random_secret_here"
 
-curl -X POST https://your-app.onrender.com/admin/licenses/XXXX-XXXX-XXXX/activate \
+curl -X POST https://blog-chrometool.onrender.com/admin/licenses/XXXX-XXXX-XXXX/activate \
   -H "X-Admin-Token: your_long_random_secret_here"
 ```
 
 ### 3.4 목록 조회
 
 ```bash
-curl https://your-app.onrender.com/admin/licenses \
+curl https://blog-chrometool.onrender.com/admin/licenses \
   -H "X-Admin-Token: your_long_random_secret_here"
 ```
 
@@ -144,7 +145,7 @@ curl https://your-app.onrender.com/admin/licenses \
 ### 4.2 Render 배포 절차
 
 1. GitHub에 `blog-chrometool` 저장소 푸시
-2. Render → **New Web Service** → 저장소 연결
+2. 연결된 웹 서비스의 대시보드 이름은 `3minblog`이고, 공개 주소는 `https://blog-chrometool.onrender.com`이다. 이름을 바꿔도 이 주소는 바뀌지 않는다.
 3. 설정:
    - **Root Directory:** `backend`
    - **Build Command:** `pip install -r requirements.txt`
@@ -162,7 +163,7 @@ curl https://your-app.onrender.com/admin/licenses \
    - Mount Path: `/var/data`
    - Size: 1GB
 
-6. 배포 완료 후 `https://your-app.onrender.com/health` → `{"status":"ok"}` 확인
+6. 배포 완료 후 `https://blog-chrometool.onrender.com/health` → `{"status":"ok"}` 확인
 
 ### 4.3 Starter($7) + Disk
 

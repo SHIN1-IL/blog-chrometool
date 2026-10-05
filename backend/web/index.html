@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#03c75a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>오토블로그 AI — 사장님 현장 일기</title>
+  <title>3분 블로그</title>
   <link rel="stylesheet" href="styles.css?v=20260915pc" />
 </head>
 <body>
   <header class="header">
-    <h1>오토블로그 3분 현장일기</h1>
+    <h1>3분 블로그</h1>
     <p class="sub">핸드폰·태블릿·PC 어디서나 · 생성 후 네이버에 붙여넣기</p>
   </header>
 
@@ -137,22 +137,37 @@
       </span>
     </label>
 
-    <label>
-      13. 넣을 사진 수
-      <select id="photoCount">
-        <option value="0">0장 (글만)</option>
-        <option value="1">1장</option>
-        <option value="2">2장</option>
-        <option value="3" selected>3장 (권장)</option>
-        <option value="4">4장</option>
-        <option value="5">5장</option>
-        <option value="6">6장</option>
-        <option value="7">7장</option>
-        <option value="8">8장</option>
-        <option value="9">9장</option>
-        <option value="10">10장</option>
-      </select>
-    </label>
+    <div class="photo-attach" id="photoAttach">
+      <p class="photo-title">13. 사진 첨부하기</p>
+      <p class="hint">초반현장 · 중간과정1 · 중간과정2 · 중간과정3 · 마무리현장. 단계마다 최대 10장, 합계 최대 50장. 사진은 이 기기에만 있고 AI로 보내지 않습니다. 썸네일을 누르면 빼집니다.</p>
+      <p class="photo-total" data-photo-total>전체 0/50</p>
+      <div class="photo-stage">
+        <div class="photo-stage-head"><span>초반현장</span><span data-count="start">0/10</span></div>
+        <input type="file" accept="image/*" multiple data-stage-input="start" />
+        <div class="photo-thumbs" data-thumbs="start"></div>
+      </div>
+      <div class="photo-stage">
+        <div class="photo-stage-head"><span>중간과정1</span><span data-count="mid1">0/10</span></div>
+        <input type="file" accept="image/*" multiple data-stage-input="mid1" />
+        <div class="photo-thumbs" data-thumbs="mid1"></div>
+      </div>
+      <div class="photo-stage">
+        <div class="photo-stage-head"><span>중간과정2</span><span data-count="mid2">0/10</span></div>
+        <input type="file" accept="image/*" multiple data-stage-input="mid2" />
+        <div class="photo-thumbs" data-thumbs="mid2"></div>
+      </div>
+      <div class="photo-stage">
+        <div class="photo-stage-head"><span>중간과정3</span><span data-count="mid3">0/10</span></div>
+        <input type="file" accept="image/*" multiple data-stage-input="mid3" />
+        <div class="photo-thumbs" data-thumbs="mid3"></div>
+      </div>
+      <div class="photo-stage">
+        <div class="photo-stage-head"><span>마무리현장</span><span data-count="end">0/10</span></div>
+        <input type="file" accept="image/*" multiple data-stage-input="end" />
+        <div class="photo-thumbs" data-thumbs="end"></div>
+      </div>
+      <p class="error" data-photo-msg hidden></p>
+    </div>
 
     <label>
       14. 짧은 영상
@@ -189,7 +204,8 @@
       <input type="text" id="blogTitle" placeholder="제목" />
       <textarea id="blogContent" rows="10"></textarea>
       <input type="text" id="blogTags" placeholder="#태그" />
-      <p class="hint">사진·영상은 본문 마커 자리에 네이버 앱에서 직접 넣으세요.</p>
+      <p class="hint">글을 붙여넣은 뒤, 아래 단계 사진을 1번부터 네이버에 첨부하세요. 사진 파일은 복사에 포함되지 않습니다.</p>
+      <div id="blogStagePreview" class="blog-stage-preview" hidden></div>
       <button type="button" id="copyBlogBtn" class="btn-primary">블로그 전체 복사</button>
     </div>
     <div id="tab-daangn" class="tab-content">
@@ -225,6 +241,7 @@
     <p><a href="/privacy">개인정보 처리방침</a> · 문의 카톡/문자 070-8065-1258</p>
   </footer>
 
-  <script src="app.js?v=20260915mail"></script>
+  <script src="photo-stages.js?v=20261005photo"></script>
+  <script src="app.js?v=20261005photo"></script>
 </body>
 </html>

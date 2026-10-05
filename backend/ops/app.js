@@ -41,7 +41,7 @@
     const allinM = Number(biz?.allinMonthlyPrice || biz?.monthlyPrice || 24900).toLocaleString("ko-KR");
     const plan = lic.plan || "";
     const isBlog = plan.includes("blog") && !plan.includes("allin");
-    const product = isBlog ? "현장블로그 3분" : "동네광고 올인원";
+    const product = isBlog ? "스탠다드" : "프리미엄";
     const features = isBlog
       ? "네이버 블로그 초안만 나갑니다."
       : "블로그 / 당근 / 네이버지도 / 카톡 초안이 한 번에 나갑니다.";
@@ -49,7 +49,7 @@
       ? `유료 월 ${blogM}원 · 하루 1건 · 달 30건`
       : `유료 월 ${allinM}원 · 하루 3건 · 달 90건`;
     return [
-      "오토블로그 키 발급됐습니다.",
+      "3분 블로그 키 발급됐습니다.",
       "",
       `키: ${lic.license_key}`,
       `상품: ${product}`,
@@ -61,7 +61,7 @@
       "",
       "폰: https://blog-chrometool.onrender.com/app/",
       "키 넣고 [등록] → 현장 입력 → 생성 후 복사",
-      "사진·짧은 영상은 글에 자리가 나옵니다. 각 앱에서 직접 넣으세요.",
+      "사진은 초반현장·중간과정1·중간과정2·중간과정3·마무리현장 순서입니다. 단계마다 10장, 합계 50장. 복사 후 네이버에서 1번부터 첨부하세요.",
       "",
       `구독 문의·연장은 ${biz?.contactMethod || "카톡"} ${biz?.contact || ""} / ${biz?.contactEmail || "acrosstool@gmail.com"}`.trim(),
     ].join("\n");
@@ -102,16 +102,16 @@
   }
 
   const ISSUES = {
-    "blog-30": { plan: "paid_blog", days: 30, notePrefix: "블로그 12900" },
-    "blog-180": { plan: "paid_blog", days: 180, notePrefix: "블로그 64500" },
-    "blog-365": { plan: "paid_blog", days: 365, notePrefix: "블로그 129000" },
-    "allin-30": { plan: "paid_allin", days: 30, notePrefix: "올인원 24900" },
-    "allin-180": { plan: "paid_allin", days: 180, notePrefix: "올인원 124500" },
-    "allin-365": { plan: "paid_allin", days: 365, notePrefix: "올인원 249000" },
-    "trial-blog": { plan: "trial_blog", days: 30, notePrefix: "블로그 체험" },
-    "trial-allin": { plan: "trial_allin", days: 30, notePrefix: "올인원 체험" },
-    "family-blog": { plan: "family_blog", days: 30, notePrefix: "블로그 지인" },
-    "family-allin": { plan: "family_allin", days: 30, notePrefix: "올인원 지인" },
+    "blog-30": { plan: "paid_blog", days: 30, notePrefix: "스탠다드 12900" },
+    "blog-180": { plan: "paid_blog", days: 180, notePrefix: "스탠다드 64500" },
+    "blog-365": { plan: "paid_blog", days: 365, notePrefix: "스탠다드 129000" },
+    "allin-30": { plan: "paid_allin", days: 30, notePrefix: "프리미엄 24900" },
+    "allin-180": { plan: "paid_allin", days: 180, notePrefix: "프리미엄 124500" },
+    "allin-365": { plan: "paid_allin", days: 365, notePrefix: "프리미엄 249000" },
+    "trial-blog": { plan: "trial_blog", days: 30, notePrefix: "스탠다드 체험" },
+    "trial-allin": { plan: "trial_allin", days: 30, notePrefix: "프리미엄 체험" },
+    "family-blog": { plan: "family_blog", days: 30, notePrefix: "스탠다드 지인" },
+    "family-allin": { plan: "family_allin", days: 30, notePrefix: "프리미엄 지인" },
   };
 
   async function issue(kind) {

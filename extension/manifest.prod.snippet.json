@@ -3,5 +3,5 @@
 
 "host_permissions": [
   "*://blog.naver.com/*",
-  "https://your-app.onrender.com/*"
+  "https://blog-chrometool.onrender.com/*"
 ]

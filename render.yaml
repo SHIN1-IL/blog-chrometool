@@ -3,7 +3,8 @@
 
 services:
   - type: web
-    name: autoblog-api
+    # 대시보드에 보이는 이름. 공개 주소는 https://blog-chrometool.onrender.com
+    name: 3minblog
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt

@@ -90,6 +90,45 @@
       margin-top: 0;
       padding: 6px;
     }
+    .photo-attach { margin-bottom: 10px; }
+    .photo-title { font-weight: 700; margin: 0 0 4px; }
+    .photo-total { margin: 6px 0 0; color: #64748b; font-size: 12px; font-weight: 700; }
+    .photo-stage {
+      margin-top: 8px;
+      padding: 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+    }
+    .photo-stage-head {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+    }
+    .photo-thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .photo-thumb {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      padding: 0;
+      border: none;
+      border-radius: 6px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+    .photo-thumb img { width: 64px; height: 64px; object-fit: cover; display: block; }
+    .photo-thumb span, .photo-thumb figcaption {
+      position: absolute;
+      left: 2px;
+      top: 2px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 10px;
+      border-radius: 4px;
+      padding: 0 4px;
+    }
+    .photo-thumb-static { margin: 0; }
+    .blog-stage-row h3 { margin: 8px 0 4px; font-size: 13px; }
+    .error { color: #dc2626; font-size: 12px; }
     .form-group { margin-bottom: 10px; }
     label { font-weight: 600; display: block; margin-bottom: 4px; }
     input[type="text"], select, textarea {
@@ -330,21 +369,36 @@
     </div>
   </div>
 
-  <div class="form-group">
-    <label for="photoCount">13. 넣을 사진 수</label>
-    <select id="photoCount">
-      <option value="0">0장 (글만)</option>
-      <option value="1">1장</option>
-      <option value="2">2장</option>
-      <option value="3" selected>3장 (권장)</option>
-      <option value="4">4장</option>
-      <option value="5">5장</option>
-      <option value="6">6장</option>
-      <option value="7">7장</option>
-      <option value="8">8장</option>
-      <option value="9">9장</option>
-      <option value="10">10장</option>
-    </select>
+  <div class="form-group photo-attach" id="photoAttach">
+    <p class="photo-title">13. 사진 첨부하기</p>
+    <p class="hint-line">초반현장 · 중간과정1 · 중간과정2 · 중간과정3 · 마무리현장. 단계마다 최대 10장, 합계 최대 50장. 사진은 이 기기에만 있고 AI로 보내지 않습니다. 썸네일을 누르면 빼집니다.</p>
+    <p class="photo-total" data-photo-total>전체 0/50</p>
+    <div class="photo-stage">
+      <div class="photo-stage-head"><span>초반현장</span><span data-count="start">0/10</span></div>
+      <input type="file" accept="image/*" multiple data-stage-input="start">
+      <div class="photo-thumbs" data-thumbs="start"></div>
+    </div>
+    <div class="photo-stage">
+      <div class="photo-stage-head"><span>중간과정1</span><span data-count="mid1">0/10</span></div>
+      <input type="file" accept="image/*" multiple data-stage-input="mid1">
+      <div class="photo-thumbs" data-thumbs="mid1"></div>
+    </div>
+    <div class="photo-stage">
+      <div class="photo-stage-head"><span>중간과정2</span><span data-count="mid2">0/10</span></div>
+      <input type="file" accept="image/*" multiple data-stage-input="mid2">
+      <div class="photo-thumbs" data-thumbs="mid2"></div>
+    </div>
+    <div class="photo-stage">
+      <div class="photo-stage-head"><span>중간과정3</span><span data-count="mid3">0/10</span></div>
+      <input type="file" accept="image/*" multiple data-stage-input="mid3">
+      <div class="photo-thumbs" data-thumbs="mid3"></div>
+    </div>
+    <div class="photo-stage">
+      <div class="photo-stage-head"><span>마무리현장</span><span data-count="end">0/10</span></div>
+      <input type="file" accept="image/*" multiple data-stage-input="end">
+      <div class="photo-thumbs" data-thumbs="end"></div>
+    </div>
+    <p class="error" data-photo-msg hidden></p>
   </div>
 
   <div class="form-group">
@@ -378,7 +432,8 @@
       <input type="text" id="blogTitle" placeholder="블로그 제목">
       <textarea id="blogContent" class="result-box" placeholder="블로그 본문"></textarea>
       <input type="text" id="blogTags" placeholder="#태그">
-      <p class="hint-line">사진은 본문 마커 자리에 직접 넣으세요. 당근·지도에는 1~2장만 쓰는 것이 좋습니다.</p>
+      <p class="hint-line">글을 붙여넣은 뒤, 아래 단계 사진을 1번부터 네이버에 첨부하세요. 사진 파일은 복사에 포함되지 않습니다.</p>
+      <div id="blogStagePreview" class="blog-stage-preview" hidden></div>
       <button id="injectBtn">📝 네이버 에디터로 보내기</button>
       <button id="copyBlogBtn" class="secondary">📋 블로그 전체 복사</button>
     </div>
@@ -413,8 +468,9 @@
     · 문의 카톡/문자 070-8065-1258
   </footer>
 
+  <script src="photo-stages.js?v=20261005photo"></script>
   <script src="config.js?v=8"></script>
   <script src="business.js?v=9"></script>
-  <script src="sidepanel.js?v=9"></script>
+  <script src="sidepanel.js?v=20261005photo"></script>
 </body>
 </html>

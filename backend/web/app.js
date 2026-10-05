@@ -174,14 +174,14 @@
     const allinS = Number(biz.allinSemiAnnualPrice || biz.semiAnnualPrice || 124500).toLocaleString("ko-KR");
     const allinY = Number(biz.allinYearlyPrice || biz.yearlyPrice || 249000).toLocaleString("ko-KR");
     els.bankNotice.innerHTML =
-      `💳 <b>현장블로그 3분</b> · 하루 1건 · 달 30건<br>` +
+      `💳 <b>3분 블로그 스탠다드 플랜</b> · 하루 1건 · 달 30건 · 네이버 블로그<br>` +
       `월 ${blogM}원 · 6개월 ${blogS}원(1개월 할인) · 연 ${blogY}원(2개월 할인)<br>` +
-      `💳 <b>동네광고 올인원</b> · 하루 3건 · 달 90건<br>` +
+      `💳 <b>3분 블로그 프리미엄 플랜</b> · 하루 3건 · 달 90건 · 블로그·당근·지도·카톡<br>` +
       `월 ${allinM}원 · 6개월 ${allinS}원(1개월 할인) · 연 ${allinY}원(2개월 할인)<br>` +
       `${biz.bankName} ${biz.accountNumber} (예금주: ${biz.accountHolder})<br>` +
       `입금 후 ${biz.contactMethod}(${biz.contact}) → ${biz.keyDeliveryMinutes}분 내 키<br>` +
       `이메일 ${biz.contactEmail || "acrosstool@gmail.com"}<br>` +
-      `<span style="color:#94a3b8;font-size:12px;">입금 메모에 「블로그」또는 「올인원」을 적어 주세요.</span>`;
+      `<span style="color:#94a3b8;font-size:12px;">입금 메모에 「스탠다드」또는 「프리미엄」을 적어 주세요.</span>`;
   }
 
   function renderObstacles(type) {
@@ -301,10 +301,34 @@
 
   els.verifyBtn.addEventListener("click", () => verify(false));
 
+  const photoStore = window.PhotoStages.createStore();
+  let lastRawBlog = "";
+  let lastStagedBlog = "";
+
+  function layoutBlogText() {
+    const content = document.getElementById("blogContent");
+    const preview = document.getElementById("blogStagePreview");
+    if (!lastRawBlog) {
+      window.PhotoStages.renderResult(preview, photoStore);
+      return;
+    }
+    const next = window.PhotoStages.blogTextFromRaw(lastRawBlog, photoStore);
+    if (!content.value || content.value === lastStagedBlog || content.value === lastRawBlog) {
+      content.value = next;
+      lastStagedBlog = next;
+    }
+    window.PhotoStages.renderResult(preview, photoStore);
+  }
+
+  window.PhotoStages.bind(document.getElementById("photoAttach"), photoStore, layoutBlogText);
+
   function applyChannels(data) {
     const blog = data.naver_blog || {};
     document.getElementById("blogTitle").value = blog.title || "";
-    document.getElementById("blogContent").value = blog.content || "";
+    lastRawBlog = blog.content || "";
+    lastStagedBlog = "";
+    document.getElementById("blogContent").value = "";
+    layoutBlogText();
     document.getElementById("blogTags").value = (blog.tags || []).join(" ");
     document.getElementById("daangnText").value = data.daangn_post || "";
     const place = data.place_review || {};
@@ -478,7 +502,7 @@
       feeling: document.getElementById("feeling").value.trim(),
       extra: document.getElementById("extra").value.trim(),
       tone: document.getElementById("tone").value,
-      photo_count: Number(document.getElementById("photoCount").value || 3),
+      photo_count: 0,
       video_count: Number(document.getElementById("videoCount").value || 0),
     };
   }
@@ -561,7 +585,9 @@
     navigator.clipboard.writeText(t.trim()).then(
       () => {
         els.copyMsg.hidden = false;
-        els.copyMsg.textContent = "복사되었습니다. 네이버 블로그 앱에 붙여넣기 하세요.";
+        els.copyMsg.textContent = photoStore.total()
+          ? "복사되었습니다. 네이버에 붙여넣은 뒤, 초반현장부터 사진을 1번 순서대로 첨부하세요."
+          : "복사되었습니다. 네이버 블로그 앱에 붙여넣기 하세요.";
       },
       () => {
         els.copyMsg.hidden = false;

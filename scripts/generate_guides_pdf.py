@@ -39,6 +39,7 @@ WARN = HexColor("#b45309")
 
 CUSTOMER_URL = "https://blog-chrometool.onrender.com/app/"
 ADMIN_BASE = "https://blog-chrometool.onrender.com"
+WRITTEN = "2026-10-05"
 
 
 def register_font() -> str:
@@ -191,15 +192,18 @@ def table(headers, rows, col_widths, s):
     return t
 
 
-def add_header_footer(canvas, doc):
-    canvas.saveState()
-    canvas.setFillColor(GREEN)
-    canvas.rect(0, A4[1] - 8 * mm, A4[0], 8 * mm, fill=1, stroke=0)
-    canvas.setFillColor(MUTED)
-    canvas.setFont("KR", 8)
-    canvas.drawString(18 * mm, 12 * mm, "오토블로그 AI")
-    canvas.drawRightString(A4[0] - 18 * mm, 12 * mm, f"{doc.page}")
-    canvas.restoreState()
+def page_chrome(brand):
+    def add_header_footer(canvas, doc):
+        canvas.saveState()
+        canvas.setFillColor(GREEN)
+        canvas.rect(0, A4[1] - 8 * mm, A4[0], 8 * mm, fill=1, stroke=0)
+        canvas.setFillColor(MUTED)
+        canvas.setFont("KR", 8)
+        canvas.drawString(18 * mm, 12 * mm, brand)
+        canvas.drawRightString(A4[0] - 18 * mm, 12 * mm, f"{doc.page}")
+        canvas.restoreState()
+
+    return add_header_footer
 
 
 def build_admin(s, font):
@@ -209,14 +213,14 @@ def build_admin(s, font):
     story.append(Paragraph("관리자 설정 · 운영 가이드", s["cover"]))
     story.append(
         Paragraph(
-            "입금 확인 후 라이선스 키 발급 · 연장 · 고객 안내<br/>작성일: 2026-09-06",
+            f"입금 확인 후 라이선스 키 발급 · 연장 · 고객 안내<br/>작성일: {WRITTEN}",
             s["sub"],
         )
     )
     story.append(
         Paragraph(
-            "관리자 웹페이지는 없습니다. 키는 Render 서버의 Admin API(터미널 curl)로만 발급합니다. "
-            "노트북에서 manage.py만 실행하면 고객이 쓰는 서버에는 키가 생기지 않습니다.",
+            "키는 운영 콘솔(/ops/)에서 발급합니다. 노트북에서 manage.py만 실행하면 "
+            "고객이 쓰는 서버에는 키가 생기지 않습니다.",
             s["warn"],
         )
     )
@@ -227,8 +231,8 @@ def build_admin(s, font):
             ["구분", "URL"],
             [
                 ["고객이 쓰는 화면 (핸드폰·PC 브라우저)", CUSTOMER_URL],
+                ["운영 콘솔 (키 발급)", f"{ADMIN_BASE}/ops/"],
                 ["서버 상태 확인", f"{ADMIN_BASE}/health"],
-                ["키 발급 API (관리자 전용)", f"{ADMIN_BASE}/admin/licenses"],
                 ["Render 대시보드", "https://dashboard.render.com"],
             ],
             [70 * mm, 105 * mm],
@@ -241,11 +245,15 @@ def build_admin(s, font):
         table(
             ["항목", "내용"],
             [
-                ["월간", "12,900원 / 30일"],
-                ["연간", "129,000원 / 365일"],
+                ["스탠다드", "월 12,900원 · 6개월 64,500원 · 연 129,000원"],
+                ["스탠다드 내용", "네이버 블로그만 · 하루 1건 · 달 30건"],
+                ["프리미엄", "월 24,900원 · 6개월 124,500원 · 연 249,000원"],
+                ["프리미엄 내용", "블로그·당근·지도·카톡 · 하루 3건 · 달 90건"],
                 ["입금", "하나은행 365-910996-44807 (예금주: 신일)"],
+                ["입금 메모", "스탠다드 또는 프리미엄"],
                 ["문의", "카톡/문자 070-8065-1258 · acrosstool@gmail.com"],
                 ["키 전달 목표", "입금 확인 후 약 10분 이내"],
+                ["같이 보낼 설명서", "스탠다드 PDF 또는 프리미엄 PDF 중 입금한 플랜"],
             ],
             [40 * mm, 135 * mm],
             s,
@@ -254,7 +262,7 @@ def build_admin(s, font):
 
     story.append(Paragraph("3. 한 번만 하는 준비", s["h1"]))
     story.append(bullets([
-        "브라우저에서 dashboard.render.com 로그인 → 웹 서비스 blog-chrometool 열기",
+        "브라우저에서 dashboard.render.com 로그인 → 웹 서비스 3minblog 열기",
         "Environment 메뉴에서 ADMIN_TOKEN 값을 복사한다. 이것이 관리자 비밀번호다.",
         "ADMIN_TOKEN이 비어 있으면 발급 API가 꺼져 있다. Render에 값을 넣고 재배포한다.",
         "토큰은 고객에게 절대 보내지 않는다.",
@@ -263,27 +271,32 @@ def build_admin(s, font):
 
     story.append(Paragraph("4. 입금 후 키 발급 (매일 하는 일)", s["h1"]))
     story.append(Paragraph(
-        "1) 통장 입금과 카톡/문자의 입금자명을 맞춘다.<br/>"
-        "2) 아래 명령을 터미널에 붙여넣고, 여기토큰을 ADMIN_TOKEN으로, 홍길동을 실제 이름으로 바꾼다.<br/>"
-        "3) 응답의 license_key를 카톡/문자로 보낸다.<br/>"
-        "4) 고객에게 아래 URL에서 키를 넣고 [등록]하라고 안내한다.",
+        f"1) 통장 입금과 카톡/문자의 입금자명·메모(스탠다드/프리미엄)를 맞춘다.<br/>"
+        f"2) 운영 콘솔 {ADMIN_BASE}/ops/ 에 ADMIN_TOKEN으로 입장한 뒤, 해당 플랜 버튼을 누른다.<br/>"
+        "3) 나온 키를 카톡/문자로 보내고, 그 플랜의 고객 설명서 PDF를 같이 보낸다.<br/>"
+        "4) 고객에게 아래 URL에서 키를 넣고 [등록]하라고 안내한다.<br/>"
+        "터미널로 발급할 때는 아래 curl을 쓴다. 여기토큰을 ADMIN_TOKEN으로, 홍길동을 실제 이름으로 바꾼다.",
         s["body"],
     ))
-    story.append(Paragraph("■ 월간 (30일)", s["h2"]))
+    story.append(Paragraph("■ 스탠다드 월간 (12,900원 · 30일)", s["h2"]))
     story.append(Paragraph(
-        "curl -X POST https://blog-chrometool.onrender.com/admin/licenses<br/>"
+        f"curl -X POST {ADMIN_BASE}/admin/licenses<br/>"
         "  -H \"Content-Type: application/json\"<br/>"
         "  -H \"X-Admin-Token: 여기토큰\"<br/>"
-        "  -d '{\"plan\": \"paid\", \"days\": 30, \"note\": \"홍길동 월결\"}'",
+        "  -d '{\"plan\": \"paid_blog\", \"days\": 30, \"note\": \"홍길동 스탠다드\"}'",
         s["code"],
     ))
-    story.append(Paragraph("■ 연간 (365일)", s["h2"]))
+    story.append(Paragraph("■ 프리미엄 월간 (24,900원 · 30일)", s["h2"]))
     story.append(Paragraph(
-        "curl -X POST https://blog-chrometool.onrender.com/admin/licenses<br/>"
+        f"curl -X POST {ADMIN_BASE}/admin/licenses<br/>"
         "  -H \"Content-Type: application/json\"<br/>"
         "  -H \"X-Admin-Token: 여기토큰\"<br/>"
-        "  -d '{\"plan\": \"paid\", \"days\": 365, \"note\": \"홍길동 연결\"}'",
+        "  -d '{\"plan\": \"paid_allin\", \"days\": 30, \"note\": \"홍길동 프리미엄\"}'",
         s["code"],
+    ))
+    story.append(Paragraph(
+        "6개월은 days 180, 1년은 days 365. 스탠다드는 plan paid_blog, 프리미엄은 plan paid_allin.",
+        s["body"],
     ))
     story.append(Paragraph(
         "성공 시 JSON에 license_key가 나온다. 예: K7P2-XXXX-XXXX 형태. 그 문자열만 고객에게 보낸다.",
@@ -304,7 +317,8 @@ def build_admin(s, font):
         "핸드폰에서 아래 주소를 열고 키를 넣은 뒤 [등록]을 눌러 주세요.<br/>"
         f"{CUSTOMER_URL}<br/>"
         "PC 크롬 확장을 쓰시면 같은 키를 확장에도 등록하면 됩니다.<br/>"
-        "구글/크롬 가입은 필요 없습니다.",
+        "구글/크롬 가입은 필요 없습니다.<br/>"
+        "스탠다드 고객에게는 스탠다드 설명서 PDF를, 프리미엄 고객에게는 프리미엄 설명서 PDF를 같이 보내세요.",
         s["code"],
     ))
 
@@ -327,7 +341,12 @@ def build_admin(s, font):
         "  -d '{\"days\": 30}'",
         s["code"],
     ))
-    story.append(Paragraph("부분 입금 시 연장 일수 = 입금액 ÷ 12,900 × 30 (소수점 버림). 예: 6,450원 → 15일.", s["body"]))
+    story.append(Paragraph(
+        "부분 입금 시 연장 일수(소수점 버림). "
+        "스탠다드: 입금액 ÷ 12,900 × 30. 예: 6,450원 → 15일. "
+        "프리미엄: 입금액 ÷ 24,900 × 30.",
+        s["body"],
+    ))
     story.append(Paragraph("정지 / 재활성화", s["h2"]))
     story.append(Paragraph(
         "정지: POST .../admin/licenses/키/suspend  (헤더에 X-Admin-Token만)<br/>"
@@ -340,9 +359,10 @@ def build_admin(s, font):
         table(
             ["플랜", "코드", "일일", "월간", "비고"],
             [
-                ["체험", "trial", "1", "1", "1건 사용 즉시 종료"],
-                ["지인", "family_free", "1", "30", "발급 후 약 1달"],
-                ["유료", "paid", "3", "90", "월 12,900 / 연 129,000"],
+                ["스탠다드 체험", "trial_blog", "1", "1", "1건 사용 즉시 종료"],
+                ["프리미엄 체험", "trial_allin", "1", "1", "1건 사용 즉시 종료"],
+                ["스탠다드", "paid_blog", "1", "30", "월 12,900 / 6개월 64,500 / 연 129,000"],
+                ["프리미엄", "paid_allin", "3", "90", "월 24,900 / 6개월 124,500 / 연 249,000"],
                 ["관리자", "admin_test", "3", "무제한", "고정키 ADMIN-TEST (운영 서버에 두지 말 것)"],
             ],
             [28 * mm, 32 * mm, 22 * mm, 22 * mm, 71 * mm],
@@ -362,10 +382,12 @@ def build_admin(s, font):
     story.append(Paragraph("8. 현재 제품 한계 (고객 문의 대비)", s["h1"]))
     story.append(bullets([
         "제목·본문 자동 주입: 확장의 [네이버 에디터로 보내기]가 시도한다. 스마트에디터가 바뀌면 실패할 수 있다. 실패 시 본문 칸 클릭 후 붙여넣기.",
-        "사진 선택·자동 첨부는 아직 없다. 네이버 글쓰기에서 사진을 직접 첨부한다.",
-        "폰에서는 글 생성 + 복사만 된다. 네이버 앱/모바일 글쓰기에 자동으로 넣지 못한다.",
+        "사진 첨부하기는 초반현장, 중간과정1, 중간과정2, 중간과정3, 마무리현장의 5단계다. 단계마다 최대 10장, 합계 최대 50장이다.",
+        "사진은 고객 기기에만 있다. AI로 전송하지 않으므로 사진 때문에 AI 비용이 늘지 않는다.",
+        "복사와 네이버 에디터로 보내기는 글만 전달한다. 사진 파일은 들어가지 않는다. 고객은 본문의 【단계 이름】 아래에서 화면 사진을 1번부터 네이버에 첨부한다.",
+        "폰에서는 글 생성 + 복사만 된다. 네이버 앱에 사진이 자동으로 꽂히지 않는다.",
         "Render 무료 플랜은 첫 접속이 30~60초 걸릴 수 있다.",
-        "로컬 manage.py로 만든 키는 고객 화면에 등록되지 않는다. 반드시 위 curl(Render)로 발급한다.",
+        "로컬 manage.py로 만든 키는 고객 화면에 등록되지 않는다. 운영 콘솔 또는 위 curl로 발급한다.",
     ], font, s))
 
     story.append(Paragraph("9. 자주 막는 오류", s["h1"]))
@@ -377,7 +399,7 @@ def build_admin(s, font):
                 ["401 / 인증 실패", "ADMIN_TOKEN 불일치", "Render Environment 값 재복사"],
                 ["Admin API 비활성", "서버에 ADMIN_TOKEN 없음", "환경변수 추가 후 재배포"],
                 ["첫 요청만 매우 느림", "Render 콜드스타트", "1분 대기 후 재시도"],
-                ["한도 초과", "유료 일 3 / 월 90", "다음날 또는 한도 조정"],
+                ["한도 초과", "스탠다드 일 1·월 30 / 프리미엄 일 3·월 90", "다음날 또는 한도 조정"],
             ],
             [40 * mm, 55 * mm, 80 * mm],
             s,
@@ -386,18 +408,16 @@ def build_admin(s, font):
     return story
 
 
-def build_customer(s, font):
-    story = []
-    story.append(Spacer(1, 8 * mm))
-    story.append(Paragraph("오토블로그 AI", s["sub"]))
-    story.append(Paragraph("고객 사용 방법", s["cover"]))
-    story.append(
-        Paragraph(
-            "핸드폰에서 3분 체크 → AI 초안 → 네이버 블로그에 붙여넣기<br/>작성일: 2026-09-06",
-            s["sub"],
-        )
-    )
+def payment_rows(plan_rows):
+    return plan_rows + [
+        ["입금 계좌", "하나은행 365-910996-44807"],
+        ["예금주", "신일"],
+        ["입금 후 연락", "카톡/문자 070-8065-1258 · acrosstool@gmail.com"],
+        ["키 받는 시간", "확인 후 약 10분 이내"],
+    ]
 
+
+def shared_start(story, s):
     story.append(Paragraph("1. 이용 주소 (이 주소만 저장하세요)", s["h1"]))
     story.append(Paragraph(f"<b>{CUSTOMER_URL}</b>", s["body"]))
     story.append(Paragraph(
@@ -406,76 +426,211 @@ def build_customer(s, font):
         s["body"],
     ))
 
-    story.append(Paragraph("2. 구독 · 입금", s["h1"]))
+
+def shared_form_steps():
+    return [
+        f"위 주소({CUSTOMER_URL})를 연다. 첫 화면은 30~60초 걸릴 수 있다.",
+        "라이선스 키를 입력하고 [등록]을 누른다. 플랜 이름과 남은 기간·오늘 건수가 보이면 성공이다.",
+        "업체 종류(설비 / 청소 / 직접입력)를 고른다.",
+        "현장위치, 해결사항, 해결과정, 글 스타일은 꼭 채운다. 나머지는 있으면 더 좋은 글이 나온다.",
+    ]
+
+
+def shared_notes(limit_line):
+    return [
+        limit_line,
+        "키는 핸드폰과 PC에서 같이 쓸 수 있다.",
+        "크롬(구글) 아이디가 없어도 핸드폰 웹은 이용할 수 있다.",
+        "네이버에 올리려면 네이버 로그인은 필요하다.",
+        "키를 다른 사람에게 공유하지 마세요. 한도가 같이 깎입니다.",
+        "문의: 카톡/문자 070-8065-1258 · acrosstool@gmail.com",
+    ]
+
+
+def trouble_table(s, extra_rows):
+    rows = [
+        ["등록이 안 됨", "키 철자(하이픈 포함)를 다시 확인. 입금 후 키를 받기 전이면 관리자에게 문의."],
+        ["화면이 안 열리거나 매우 느림", "1분 기다렸다가 새로고침. 서버가 잠에서 깨는 시간이다."],
+        ["오늘 한도 초과", "다음날 다시 이용하거나 관리자에게 문의."],
+        ["네이버에 글이 안 들어감", "복사 버튼 → 네이버 본문을 탭/클릭 → 붙여넣기."],
+        ["사진이 붙여넣기에 없음", "복사는 글만 된다. 화면의 초반현장부터 1번 사진을 네이버 사진 첨부로 올린다."],
+    ] + extra_rows
+    return table(["상황", "이렇게 해 보세요"], rows, [50 * mm, 125 * mm], s)
+
+
+def build_customer_standard(s, font):
+    story = []
+    story.append(Spacer(1, 8 * mm))
+    story.append(Paragraph("3분 블로그", s["sub"]))
+    story.append(Paragraph("고객 사용 방법 · 스탠다드", s["cover"]))
+    story.append(
+        Paragraph(
+            f"월 12,900원 · 네이버 블로그 초안<br/>작성일: {WRITTEN}",
+            s["sub"],
+        )
+    )
+    shared_start(story, s)
+
+    story.append(Paragraph("2. 스탠다드 플랜", s["h1"]))
     story.append(
         table(
             ["항목", "내용"],
-            [
+            payment_rows([
+                ["플랜", "스탠다드"],
                 ["월간", "12,900원 (30일)"],
-                ["연간", "129,000원 (365일)"],
-                ["입금 계좌", "하나은행 365-910996-44807"],
-                ["예금주", "신일"],
-                ["입금 후 연락", "카톡/문자 070-8065-1258 · acrosstool@gmail.com"],
-                ["키 받는 시간", "확인 후 약 10분 이내"],
-            ],
+                ["6개월", "64,500원 (180일, 1개월분 할인)"],
+                ["연간", "129,000원 (365일, 2개월분 할인)"],
+                ["나오는 글", "네이버 블로그 제목 · 본문 · 태그"],
+                ["이용 한도", "하루 1건, 한 달 30건"],
+            ]),
             [45 * mm, 130 * mm],
             s,
         )
     )
     story.append(Paragraph(
-        "입금자명을 연락 주실 때 알려 주세요. 라이선스 키(예: ABCD-EFGH-IJKL)를 보내 드립니다. "
-        "사이트에서 직접 결제하거나 키를 만드는 화면은 없습니다.",
+        "입금할 때 입금자명과 함께 메모에 「스탠다드」를 적어 주세요. "
+        "라이선스 키(예: ABCD-EFGH-IJKL)를 보내 드립니다. "
+        "사이트에서 직접 결제하거나 키를 만드는 화면은 없습니다. "
+        "당근, 네이버 지도, 카톡 문구는 프리미엄 플랜에서 나옵니다. 스탠다드 화면에는 블로그 결과만 보입니다.",
         s["body"],
     ))
 
-    story.append(Paragraph("3. 핸드폰에서 글 만들기 (기본)", s["h1"]))
-    story.append(bullets([
-        f"위 주소({CUSTOMER_URL})를 연다. 첫 화면은 30~60초 걸릴 수 있다.",
-        "라이선스 키를 입력하고 [등록]을 누른다. 남은 기간·오늘 건수가 보이면 성공이다.",
-        "업체 종류(설비 / 청소 / 직접입력)를 고른다.",
-        "현장위치, 해결사항, 해결과정은 꼭 채운다. 나머지는 있으면 더 좋은 글이 나온다.",
-        "[AI 블로그 글 생성하기]를 누른다.",
-        "나온 글을 읽고 필요하면 고친 뒤 [전체 복사]를 누른다.",
-        "네이버 블로그 글쓰기(앱 또는 PC)를 열고 붙여넣는다 (길게 누르기 → 붙여넣기, 또는 Ctrl+V / ⌘+V).",
-        "사진은 네이버 글쓰기 화면에서 직접 첨부한다. 이 서비스에는 사진 자동 첨부가 없다.",
+    story.append(Paragraph("3. 핸드폰에서 블로그 글 만들기", s["h1"]))
+    story.append(bullets(shared_form_steps() + [
+        "13. 사진 첨부하기에서 초반현장, 중간과정1, 중간과정2, 중간과정3, 마무리현장에 사진을 넣는다. 단계마다 10장, 합계 50장까지. 사진은 기기에만 남고 AI로 보내지 않는다.",
+        "[오늘 현장 일기 만들기]를 누른다. 이 한 번이 하루 1건으로 잡힌다.",
+        "블로그 본문은 【초반현장】부터 【마무리현장】 순서로 나뉜다. 각 단계 아래에 그 사진이 1번부터 보인다.",
+        "[블로그 전체 복사] 후 네이버 글쓰기에 붙여넣는다. 복사되는 것은 글이다.",
+        "붙여넣은 뒤 【초반현장】 문단 다음에 화면의 초반현장 1번 사진부터 첨부하고, 같은 방식으로 다음 단계도 넣는다.",
         "확인 후 네이버에서 [발행]한다.",
     ], font, s))
 
     story.append(Paragraph("4. PC 크롬 확장을 쓸 때", s["h1"]))
     story.append(bullets([
         "관리자에게 확장 설치 파일(zip)을 받거나, 안내받은 방법으로 Chrome에 설치한다.",
-        "같은 라이선스 키를 확장 사이드패널에 넣고 [등록]한다.",
-        "글을 생성한 뒤, 네이버 블로그 글쓰기 탭을 연 상태에서 [네이버 에디터로 보내기]를 누른다.",
-        "제목·본문이 한 번에 안 들어가면: 본문 빈 칸을 한 번 클릭한 뒤 Ctrl+V / ⌘+V로 붙여넣는다. 확장이 본문을 클립보드에 넣어 둔다.",
-        "사진은 네이버 에디터에서 첨부한다.",
+        "같은 라이선스 키를 확장 사이드패널에 넣고 [등록]한다. 플랜이 스탠다드로 보여야 한다.",
+        "글을 생성한 뒤, 네이버 블로그 글쓰기 탭을 연 상태에서 [네이버 에디터로 보내기]를 누른다. 들어가는 것은 글이다.",
+        "제목·본문이 한 번에 안 들어가면: 본문 빈 칸을 한 번 클릭한 뒤 Ctrl+V / ⌘+V로 붙여넣는다.",
+        "사진은 화면의 초반현장부터 1번 순서대로 네이버 에디터에서 첨부한다.",
     ], font, s))
 
     story.append(Paragraph("5. 알아 두실 점", s["h1"]))
-    story.append(bullets([
-        "유료 플랜은 하루 3건, 한 달 90건까지 생성할 수 있다.",
-        "키는 핸드폰과 PC에서 같이 쓸 수 있다.",
-        "크롬(구글) 아이디가 없어도 핸드폰 웹은 이용할 수 있다.",
-        "네이버에 올리려면 네이버 로그인은 필요하다.",
-        "키를 다른 사람에게 공유하지 마세요. 한도가 같이 깎입니다.",
-        "문의: 카톡/문자 070-8065-1258 · acrosstool@gmail.com",
-    ], font, s))
+    story.append(bullets(shared_notes(
+        "스탠다드는 하루 1건, 한 달 30건까지 만들 수 있다. 한 건을 만들면 블로그 초안 1개가 나온다."
+    ), font, s))
 
     story.append(Paragraph("6. 안 될 때", s["h1"]))
+    story.append(trouble_table(s, [
+        ["당근·지도·카톡이 안 보임", "스탠다드에는 없는 화면이다. 필요하면 프리미엄(월 24,900원)으로 문의."],
+    ]))
+    return story
+
+
+def build_customer_premium(s, font):
+    story = []
+    story.append(Spacer(1, 8 * mm))
+    story.append(Paragraph("3분 블로그", s["sub"]))
+    story.append(Paragraph("고객 사용 방법 · 프리미엄", s["cover"]))
+    story.append(
+        Paragraph(
+            f"월 24,900원 · 블로그 · 당근 · 네이버 지도 · 카톡<br/>작성일: {WRITTEN}",
+            s["sub"],
+        )
+    )
+    shared_start(story, s)
+
+    story.append(Paragraph("2. 프리미엄 플랜", s["h1"]))
     story.append(
         table(
-            ["상황", "이렇게 해 보세요"],
-            [
-                ["등록이 안 됨", "키 철자(하이픈 포함)를 다시 확인. 입금 후 키를 받기 전이면 관리자에게 문의."],
-                ["화면이 안 열리거나 매우 느림", "1분 기다렸다가 새로고침. 무료 서버가 잠에서 깨는 시간이다."],
-                ["오늘 한도 초과", "다음날 다시 이용하거나 관리자에게 문의."],
-                ["네이버에 글이 안 들어감", "복사 버튼 → 네이버 본문을 탭/클릭 → 붙여넣기."],
-                ["사진", "네이버 글쓰기의 사진 첨부를 사용."],
-            ],
-            [50 * mm, 125 * mm],
+            ["항목", "내용"],
+            payment_rows([
+                ["플랜", "프리미엄"],
+                ["월간", "24,900원 (30일)"],
+                ["6개월", "124,500원 (180일, 1개월분 할인)"],
+                ["연간", "249,000원 (365일, 2개월분 할인)"],
+                ["나오는 글", "블로그, 당근, 네이버 지도, 카톡"],
+                ["이용 한도", "하루 3건, 한 달 90건"],
+            ]),
+            [45 * mm, 130 * mm],
             s,
         )
     )
+    story.append(Paragraph(
+        "입금할 때 입금자명과 함께 메모에 「프리미엄」을 적어 주세요. "
+        "라이선스 키(예: ABCD-EFGH-IJKL)를 보내 드립니다. "
+        "사이트에서 직접 결제하거나 키를 만드는 화면은 없습니다. "
+        "한 번 만들면 네 채널 초안이 같이 나오고, 그 한 번이 이용 1건입니다.",
+        s["body"],
+    ))
+
+    story.append(Paragraph("3. 핸드폰에서 글 만들기", s["h1"]))
+    story.append(bullets(shared_form_steps() + [
+        "13. 사진 첨부하기에서 초반현장, 중간과정1, 중간과정2, 중간과정3, 마무리현장에 사진을 넣는다. 단계마다 10장, 합계 50장까지. 사진은 AI로 보내지 않는다.",
+        "[오늘 현장 광고 만들기]를 누른다. 이 한 번이 하루 1건으로 잡힌다. 하루 최대 3번이다.",
+        "결과 칸에 블로그, 당근, 지도, 카톡 탭이 나온다. 블로그 본문은 다섯 단계로 나뉘고, 각 단계 사진이 1번부터 보인다.",
+    ], font, s))
+
+    story.append(Paragraph("4. 네 가지 결과를 올리는 방법", s["h1"]))
+    story.append(Paragraph("블로그", s["h2"]))
+    story.append(bullets([
+        "[블로그 전체 복사]를 누른 뒤 네이버 블로그 글쓰기에 붙여넣는다. 글만 복사된다.",
+        "【초반현장】부터 【마무리현장】 순서로, 화면의 해당 단계 사진을 1번부터 네이버에 첨부한다.",
+        "짧은 영상은 본문에 표시된 자리에 네이버에서 직접 넣는다.",
+        "확인 후 네이버에서 [발행]한다.",
+    ], font, s))
+    story.append(Paragraph("당근", s["h2"]))
+    story.append(bullets([
+        "[당근 문구 복사]를 누른다.",
+        "당근 앱에서 동네 글쓰기를 열고 붙여넣은 뒤 사진을 첨부하고 올린다.",
+    ], font, s))
+    story.append(Paragraph("네이버 지도", s["h2"]))
+    story.append(bullets([
+        "리뷰 요청 문자는 [문자 복사] 후 고객에게 문자로 보낸다.",
+        "플레이스 소식은 [소식 복사] 후 네이버 플레이스 소식에 붙여넣는다.",
+        "키워드는 [키워드 복사] 후 플레이스 소개나 소식에 활용한다.",
+    ], font, s))
+    story.append(Paragraph("카톡", s["h2"]))
+    story.append(bullets([
+        "고객 카톡은 [고객 카톡 복사] 후 작업한 고객 대화에 붙여넣는다.",
+        "채널/단골 소식은 [채널 소식 복사] 후 카카오 채널 소식에 붙여넣는다.",
+    ], font, s))
+
+    story.append(Paragraph("5. PC 크롬 확장을 쓸 때", s["h1"]))
+    story.append(bullets([
+        "관리자에게 확장 설치 파일(zip)을 받거나, 안내받은 방법으로 Chrome에 설치한다.",
+        "같은 라이선스 키를 확장 사이드패널에 넣고 [등록]한다. 플랜이 프리미엄으로 보여야 한다.",
+        "블로그는 네이버 글쓰기 탭을 연 상태에서 [네이버 에디터로 보내기]를 누른다. 안 들어가면 본문 칸을 클릭한 뒤 Ctrl+V / ⌘+V. 들어가는 것은 글이다.",
+        "블로그 사진은 화면의 초반현장부터 1번 순서대로 네이버에 첨부한다.",
+        "당근, 지도, 카톡은 각 탭의 복사 버튼으로 복사해 해당 앱에 붙여넣는다. 그 채널 사진은 각 앱에서 따로 고른다.",
+    ], font, s))
+
+    story.append(Paragraph("6. 알아 두실 점", s["h1"]))
+    story.append(bullets(shared_notes(
+        "프리미엄은 하루 3건, 한 달 90건까지 만들 수 있다. 한 건마다 블로그·당근·지도·카톡이 함께 나온다."
+    ), font, s))
+
+    story.append(Paragraph("7. 안 될 때", s["h1"]))
+    story.append(trouble_table(s, [
+        ["탭이 블로그만 보임", "등록된 키가 스탠다드일 수 있다. 키와 플랜 이름을 관리자에게 확인."],
+        ["당근·지도·카톡에 안 올라감", "각 탭에서 복사한 뒤, 그 앱의 글쓰기 칸을 눌러 붙여넣기."],
+    ]))
     return story
+
+
+def write_pdf(path, story, brand="오토블로그 AI", doc_title=None):
+    chrome = page_chrome(brand)
+    doc = SimpleDocTemplate(
+        str(path),
+        pagesize=A4,
+        leftMargin=18 * mm,
+        rightMargin=18 * mm,
+        topMargin=16 * mm,
+        bottomMargin=18 * mm,
+        title=doc_title or path.stem,
+        author=brand,
+    )
+    doc.build(story, onFirstPage=chrome, onLaterPages=chrome)
+    print(f"wrote {path}")
 
 
 def main():
@@ -483,22 +638,32 @@ def main():
     s = styles(font)
     DOCS.mkdir(exist_ok=True)
 
-    admin_path = DOCS / "오토블로그_관리자_운영가이드.pdf"
-    cust_path = DOCS / "오토블로그_고객_사용방법.pdf"
+    write_pdf(DOCS / "오토블로그_관리자_운영가이드.pdf", build_admin(s, font))
+    write_pdf(
+        DOCS / "3분블로그_고객_사용방법_스탠다드.pdf",
+        build_customer_standard(s, font),
+        brand="3분 블로그",
+        doc_title="3분 블로그 고객 사용 방법 · 스탠다드",
+    )
+    write_pdf(
+        DOCS / "3분블로그_고객_사용방법_프리미엄.pdf",
+        build_customer_premium(s, font),
+        brand="3분 블로그",
+        doc_title="3분 블로그 고객 사용 방법 · 프리미엄",
+    )
+    for stale in (
+        "오토블로그_고객_사용방법_스탠다드.pdf",
+        "오토블로그_고객_사용방법_프리미엄.pdf",
+    ):
+        old_named = DOCS / stale
+        if old_named.exists():
+            old_named.unlink()
+            print(f"removed {old_named}")
 
-    for path, builder in ((admin_path, build_admin), (cust_path, build_customer)):
-        doc = SimpleDocTemplate(
-            str(path),
-            pagesize=A4,
-            leftMargin=18 * mm,
-            rightMargin=18 * mm,
-            topMargin=16 * mm,
-            bottomMargin=18 * mm,
-            title=path.stem,
-            author="오토블로그 AI",
-        )
-        doc.build(builder(s, font), onFirstPage=add_header_footer, onLaterPages=add_header_footer)
-        print(f"wrote {path}")
+    old = DOCS / "오토블로그_고객_사용방법.pdf"
+    if old.exists():
+        old.unlink()
+        print(f"removed {old}")
 
 
 if __name__ == "__main__":

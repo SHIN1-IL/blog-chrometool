@@ -78,12 +78,12 @@ function renderBusinessNotice() {
   const allinS = Number(BUSINESS.allinSemiAnnualPrice || BUSINESS.semiAnnualPrice || 124500).toLocaleString("ko-KR");
   const allinY = Number(BUSINESS.allinYearlyPrice || BUSINESS.yearlyPrice || 249000).toLocaleString("ko-KR");
   el.innerHTML = `
-    💳 <b>현장블로그 3분</b> · 하루 1건 · 달 30건<br>
+    💳 <b>3분 블로그 스탠다드 플랜</b> · 하루 1건 · 달 30건 · 네이버 블로그<br>
     월 ${blogM}원 · 6개월 ${blogS}원(1개월 할인) · 연 ${blogY}원(2개월 할인)<br>
-    💳 <b>동네광고 올인원</b> · 하루 3건 · 달 90건<br>
+    💳 <b>3분 블로그 프리미엄 플랜</b> · 하루 3건 · 달 90건 · 블로그·당근·지도·카톡<br>
     월 ${allinM}원 · 6개월 ${allinS}원(1개월 할인) · 연 ${allinY}원(2개월 할인)<br>
     ${BUSINESS.bankName} ${BUSINESS.accountNumber} (예금주: ${BUSINESS.accountHolder})<br>
-    입금자명=성함, 메모에 「블로그」또는 「올인원」 · 후 ${BUSINESS.contactMethod}(${BUSINESS.contact}) → ${BUSINESS.keyDeliveryMinutes}분 내 키<br>
+    입금자명=성함, 메모에 「스탠다드」또는 「프리미엄」 · 후 ${BUSINESS.contactMethod}(${BUSINESS.contact}) → ${BUSINESS.keyDeliveryMinutes}분 내 키<br>
     이메일 ${BUSINESS.contactEmail || "acrosstool@gmail.com"}
   `;
 }
@@ -383,7 +383,7 @@ function getFormPayload() {
     feeling: document.getElementById("feeling").value.trim(),
     extra: document.getElementById("extra").value.trim(),
     tone: document.getElementById("tone").value,
-    photo_count: Number(document.getElementById("photoCount").value || 3),
+    photo_count: 0,
     video_count: Number(document.getElementById("videoCount").value || 0),
   };
 }
@@ -398,10 +398,34 @@ function validateForm(payload) {
   return null;
 }
 
+const photoStore = window.PhotoStages.createStore();
+let lastRawBlog = "";
+let lastStagedBlog = "";
+
+function layoutBlogText() {
+  const content = document.getElementById("blogContent");
+  const preview = document.getElementById("blogStagePreview");
+  if (!lastRawBlog) {
+    window.PhotoStages.renderResult(preview, photoStore);
+    return;
+  }
+  const next = window.PhotoStages.blogTextFromRaw(lastRawBlog, photoStore);
+  if (!content.value || content.value === lastStagedBlog || content.value === lastRawBlog) {
+    content.value = next;
+    lastStagedBlog = next;
+  }
+  window.PhotoStages.renderResult(preview, photoStore);
+}
+
+window.PhotoStages.bind(document.getElementById("photoAttach"), photoStore, layoutBlogText);
+
 function applyChannels(data) {
   const blog = data.naver_blog || {};
   document.getElementById("blogTitle").value = blog.title || "";
-  document.getElementById("blogContent").value = blog.content || "";
+  lastRawBlog = blog.content || "";
+  lastStagedBlog = "";
+  document.getElementById("blogContent").value = "";
+  layoutBlogText();
   document.getElementById("blogTags").value = (blog.tags || []).join(" ");
   document.getElementById("daangnText").value = data.daangn_post || "";
   const place = data.place_review || {};
@@ -538,7 +562,12 @@ document.getElementById("copyBlogBtn").addEventListener("click", () => {
   const title = document.getElementById("blogTitle").value;
   const body = document.getElementById("blogContent").value;
   const tags = document.getElementById("blogTags").value;
-  copyText(`${title}\n\n${body}\n\n${tags}`.trim(), "블로그 내용이 복사되었습니다!");
+  copyText(
+    `${title}\n\n${body}\n\n${tags}`.trim(),
+    photoStore.total()
+      ? "복사되었습니다. 네이버에 붙여넣은 뒤, 초반현장부터 사진을 1번 순서대로 첨부하세요."
+      : "블로그 내용이 복사되었습니다!"
+  );
 });
 document.getElementById("copyDaangnBtn").addEventListener("click", () => {
   copyText(document.getElementById("daangnText").value, "당근 문구가 복사되었습니다!");
@@ -738,7 +767,7 @@ els.injectBtn().addEventListener("click", async () => {
     const result = await tryInject(tab.id, text);
     if (result?.success) {
       alert(
-        "에디터에 주입 완료! 사진을 첨부하고 최종 확인 후 [발행]을 눌러주세요."
+        "에디터에 글을 넣었습니다. 초반현장부터 화면의 사진을 1번 순서대로 첨부한 뒤 [발행]을 눌러주세요."
       );
       return;
     }

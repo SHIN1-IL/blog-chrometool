@@ -247,6 +247,96 @@ button:disabled,
   font-weight: 800;
 }
 
+.photo-attach {
+  margin: 12px 0;
+}
+
+.photo-title,
+.photo-total,
+.photo-stage-head {
+  font-weight: 700;
+}
+
+.photo-title {
+  margin: 0 0 4px;
+}
+
+.photo-total {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.photo-stage {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.photo-stage-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.92rem;
+}
+
+.photo-stage input[type="file"] {
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+
+.photo-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.photo-thumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.photo-thumb img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-thumb span,
+.photo-thumb figcaption {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  background: #0f172a;
+  color: #fff;
+  font-size: 10px;
+  line-height: 1.4;
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.photo-thumb-static {
+  margin: 0;
+}
+
+.blog-stage-preview {
+  margin: 8px 0 12px;
+}
+
+.blog-stage-row h3 {
+  margin: 8px 0 4px;
+  font-size: 0.95rem;
+}
+
 .form-notes {
   margin: 10px 0 0;
   padding: 10px 12px;
