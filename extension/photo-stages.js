@@ -193,13 +193,10 @@
     if (!root || root.dataset.bound === "1") return store;
     root.dataset.bound = "1";
     var msg = root.querySelector("[data-photo-msg]");
-    root.addEventListener("change", function (event) {
-      var input = event.target;
-      if (!input || !input.getAttribute("data-stage-input")) return;
-      var stageId = input.getAttribute("data-stage-input");
+    function takeFiles(stageId, fileList, input) {
       var stage = STAGES.filter(function (item) { return item.id === stageId; })[0];
-      var result = store.add(stageId, input.files);
-      input.value = "";
+      var result = store.add(stageId, fileList);
+      if (input) input.value = "";
       refreshAttach(root, store);
       if (msg) {
         var text = limitMessage(stage ? stage.label : "이 단계", result);
@@ -207,6 +204,38 @@
         msg.textContent = text;
       }
       if (onChange) onChange();
+    }
+
+    root.addEventListener("change", function (event) {
+      var input = event.target;
+      if (!input || !input.getAttribute("data-stage-input")) return;
+      takeFiles(input.getAttribute("data-stage-input"), input.files, input);
+    });
+
+    root.addEventListener("dragover", function (event) {
+      var box = event.target.closest ? event.target.closest(".photo-stage") : null;
+      if (!box || !root.contains(box)) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+      box.classList.add("photo-stage-drop");
+    });
+
+    root.addEventListener("dragleave", function (event) {
+      var box = event.target.closest ? event.target.closest(".photo-stage") : null;
+      if (!box || !root.contains(box)) return;
+      var next = event.relatedTarget;
+      if (next && box.contains(next)) return;
+      box.classList.remove("photo-stage-drop");
+    });
+
+    root.addEventListener("drop", function (event) {
+      var box = event.target.closest ? event.target.closest(".photo-stage") : null;
+      if (!box || !root.contains(box)) return;
+      event.preventDefault();
+      box.classList.remove("photo-stage-drop");
+      var input = box.querySelector("[data-stage-input]");
+      if (!input || !event.dataTransfer) return;
+      takeFiles(input.getAttribute("data-stage-input"), event.dataTransfer.files, null);
     });
     root.addEventListener("click", function (event) {
       var button = event.target.closest ? event.target.closest("[data-remove]") : null;
