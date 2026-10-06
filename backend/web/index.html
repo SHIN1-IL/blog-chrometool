@@ -1,39 +1,86 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-font-size="md">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#03c75a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>3분 블로그</title>
-  <link rel="stylesheet" href="styles.css?v=20261005drop" />
+  <link rel="stylesheet" href="styles.css?v=20261006quota" />
 </head>
 <body>
   <header class="header">
-    <h1>3분 블로그</h1>
+    <div class="header-top">
+      <div class="header-brand"><h1>3분 블로그</h1></div>
+      <div id="quotaMeter" class="quota-meter" hidden role="status"></div>
+      <div class="header-tools">
+        <button type="button" id="settingsBtn" class="settings-btn" aria-label="설정" title="설정">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path fill="currentColor" d="M19.14 12.94a7.07 7.07 0 0 0 .05-.94 7.07 7.07 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.2 7.2 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.22-1.14.54-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.6 7.6 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.49.4 1.04.72 1.63.94l.36 2.54a.5.5 0 0 0 .5.42h3.84a.5.5 0 0 0 .5-.42l.36-2.54c.59-.22 1.14-.54 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"/>
+          </svg>
+          <span id="settingsDot" class="settings-dot"></span>
+        </button>
+      </div>
+    </div>
     <p class="sub">핸드폰·태블릿·PC 어디서나 · 생성 후 네이버에 붙여넣기</p>
+    <p id="licenseHint" class="license-hint">라이선스 키가 아직 등록되지 않았습니다. <button type="button" id="openSettingsLink" class="text-link">설정</button>에서 라이선스 키를 입력해 주세요.</p>
   </header>
+
+  <div id="settingsLayer" class="settings-layer" hidden>
+    <button type="button" id="settingsBackdrop" class="settings-backdrop" aria-label="설정 닫기"></button>
+    <aside class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="settings-head">
+        <h2 id="settingsTitle">설정</h2>
+        <button type="button" id="settingsClose" class="settings-close" aria-label="닫기">×</button>
+      </div>
+      <div class="settings-body">
+        <div class="settings-block">
+          <span class="settings-label">글씨 크기</span>
+          <div class="font-size-group" role="group" aria-label="글씨 크기">
+            <button type="button" data-font="sm">작게</button>
+            <button type="button" data-font="md" class="is-on">보통</button>
+            <button type="button" data-font="lg">크게</button>
+          </div>
+          <p class="settings-hint">화면 글씨 크기를 조절합니다. 선택 즉시 미리보기됩니다.</p>
+        </div>
+
+        <div class="settings-block">
+          <span class="settings-label">라이선스 키</span>
+          <div id="licenseBadge" class="badge inactive">라이선스 미등록</div>
+          <div id="usageCard" class="usage-card" hidden>
+            <div class="usage-row"><span>플랜</span><strong id="usagePlan">—</strong></div>
+            <div class="usage-row"><span>시작일</span><strong id="usageStart">—</strong></div>
+            <div class="usage-row"><span>구독 남은 기간</span><strong id="usageDays">—</strong></div>
+            <div class="usage-row"><span>오늘 남은 건수</span><strong id="usageDaily">—</strong></div>
+            <div class="usage-row"><span>이번 달 남은 건수</span><strong id="usageMonthly">—</strong></div>
+          </div>
+          <div class="row">
+            <input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" />
+            <button type="button" id="verifyBtn" class="btn-sm">등록</button>
+          </div>
+          <p class="settings-hint">키는 이 브라우저에만 저장됩니다. 결제 후 안내받은 키를 입력하세요.</p>
+          <p id="licenseError" class="error" hidden></p>
+        </div>
+
+        <div class="subscribe-box">
+          <button type="button" id="bankToggle" class="subscribe-toggle" aria-expanded="false">
+            <span>구독 안내</span>
+            <span class="chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div id="bankNotice" class="bank" hidden></div>
+        </div>
+      </div>
+      <div class="settings-foot">
+        <footer class="legal-foot">
+          <p class="legal-privacy-line">ACROSSTOOL · <a href="/privacy">개인정보 처리방침</a> · 문의 카톡/문자 <a href="tel:07080651258">070-8065-1258</a></p>
+          <p class="legal-merchant">어크로스툴(ACROSSTOOL) · 대표 신일 · 163-13-03007 · 양양군 서면 쌍솔배기길31-1</p>
+        </footer>
+      </div>
+    </aside>
+  </div>
 
   <div class="workspace">
   <div class="workspace-in">
-  <section class="card" id="licenseCard">
-    <div id="licenseBadge" class="badge inactive">라이선스 미등록</div>
-    <div id="usageCard" class="usage-card" hidden>
-      <div class="usage-row"><span>플랜</span><strong id="usagePlan">—</strong></div>
-      <div class="usage-row"><span>시작일</span><strong id="usageStart">—</strong></div>
-      <div class="usage-row"><span>구독 남은 기간</span><strong id="usageDays">—</strong></div>
-      <div class="usage-row"><span>오늘 남은 건수</span><strong id="usageDaily">—</strong></div>
-      <div class="usage-row"><span>이번 달 남은 건수</span><strong id="usageMonthly">—</strong></div>
-    </div>
-    <div class="row">
-      <input type="text" id="licenseKey" placeholder="라이선스 키" autocomplete="off" />
-      <button type="button" id="verifyBtn" class="btn-sm">등록</button>
-    </div>
-    <p id="licenseError" class="error" hidden></p>
-    <button type="button" id="bankToggle" class="btn-ghost">구독 안내</button>
-    <div id="bankNotice" class="bank" hidden></div>
-  </section>
-
   <form id="genForm" class="card">
     <p class="hint" id="voiceHint">🎤 버튼을 누르고 말한 뒤, 끝나면 다시 눌러 중지하세요. PC 크롬은 주소창에서 마이크를 허용해야 합니다. 아이폰은 타이핑을 이용해 주세요.</p>
 
@@ -237,12 +284,12 @@
   </section>
   </div>
 
-  <footer class="footer legal">
-    <p id="legalLine">ACROSSTOOL</p>
-    <p><a href="/privacy">개인정보 처리방침</a> · 문의 카톡/문자 070-8065-1258</p>
+  <footer class="legal-foot page-legal">
+    <p class="legal-privacy-line">ACROSSTOOL · <a href="/privacy">개인정보 처리방침</a> · 문의 카톡/문자 <a href="tel:07080651258">070-8065-1258</a></p>
+    <p class="legal-merchant">어크로스툴(ACROSSTOOL) · 대표 신일 · 163-13-03007 · 양양군 서면 쌍솔배기길31-1</p>
   </footer>
 
   <script src="photo-stages.js?v=20261005drop"></script>
-  <script src="app.js?v=20261005start"></script>
+  <script src="app.js?v=20261006quota"></script>
 </body>
 </html>

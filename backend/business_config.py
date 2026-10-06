@@ -23,4 +23,8 @@ def get_business_info() -> dict:
         "contactEmail": os.getenv("BUSINESS_CONTACT_EMAIL", "acrosstool@gmail.com"),
         "keyDeliveryMinutes": int(os.getenv("BUSINESS_KEY_DELIVERY_MINUTES", "10")),
         "operatorName": os.getenv("BUSINESS_OPERATOR_NAME", "ACROSSTOOL"),
+        "merchantLine": os.getenv(
+            "BUSINESS_MERCHANT_LINE",
+            "어크로스툴(ACROSSTOOL) · 대표 신일 · 163-13-03007 · 양양군 서면 쌍솔배기길31-1",
+        ),
     }

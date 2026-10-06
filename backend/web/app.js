@@ -51,6 +51,10 @@
     licenseError: document.getElementById("licenseError"),
     bankToggle: document.getElementById("bankToggle"),
     bankNotice: document.getElementById("bankNotice"),
+    settingsLayer: document.getElementById("settingsLayer"),
+    quotaMeter: document.getElementById("quotaMeter"),
+    licenseHint: document.getElementById("licenseHint"),
+    settingsDot: document.getElementById("settingsDot"),
     form: document.getElementById("genForm"),
     bizType: document.getElementById("bizType"),
     generateBtn: document.getElementById("generateBtn"),
@@ -123,10 +127,96 @@
   function setBadge(kind, text) {
     els.badge.className = `badge ${kind}`;
     els.badge.textContent = text;
+    if (kind !== "active" && kind !== "warn" && els.quotaMeter) {
+      els.quotaMeter.hidden = true;
+      els.quotaMeter.innerHTML = "";
+    }
+    if (els.licenseHint) els.licenseHint.hidden = isValid;
+    if (els.settingsDot) els.settingsDot.hidden = isValid;
+  }
+
+  function flipDigits(value, width) {
+    const text = String(Math.max(0, Number(value) || 0)).padStart(width, "0");
+    const tiles = text
+      .split("")
+      .map(
+        (digit) =>
+          `<span class="flip-unit" aria-hidden="true"><span class="flip-face flip-top"><span class="flip-num">${digit}</span></span><span class="flip-face flip-bottom"><span class="flip-num">${digit}</span></span></span>`
+      )
+      .join("");
+    return `<span class="flip-number" aria-label="${text.replace(/^0+(?=\d)/, "")}">${tiles}</span>`;
+  }
+
+  function quotaPair(left, limit) {
+    const width = Math.max(2, String(limit).length, String(left).length);
+    return `${flipDigits(left, width)}<span class="quota-slash">/</span>${flipDigits(limit, width)}`;
+  }
+
+  function renderHeaderQuota(data) {
+    if (!els.quotaMeter) return;
+    if (!data) {
+      els.quotaMeter.hidden = true;
+      els.quotaMeter.innerHTML = "";
+      return;
+    }
+    const plan = String(data.plan_label || data.plan || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/"/g, "&quot;");
+    const dailyLimit = Number(data.daily_limit) || 0;
+    const dailyLeft =
+      data.daily_remaining ??
+      Math.max(0, dailyLimit - (Number(data.daily_used) || 0));
+    let monthHtml = "";
+    let monthLabel = "";
+    if (data.monthly_unlimited) {
+      monthHtml = `<span class="quota-unlimited">무제한</span>`;
+      monthLabel = "무제한";
+    } else {
+      const monthlyLimit = Number(data.monthly_limit) || 0;
+      const monthlyLeft =
+        data.monthly_remaining ??
+        Math.max(0, monthlyLimit - (Number(data.monthly_used) || 0));
+      monthHtml = quotaPair(monthlyLeft, monthlyLimit);
+      monthLabel = `${monthlyLeft}/${monthlyLimit}`;
+    }
+    els.quotaMeter.innerHTML =
+      `<span class="quota-plan">${plan}</span>` +
+      `<span class="quota-block"><span class="quota-label">오늘</span>${quotaPair(dailyLeft, dailyLimit)}</span>` +
+      `<span class="quota-dot" aria-hidden="true">·</span>` +
+      `<span class="quota-block"><span class="quota-label">이번달</span>${monthHtml}</span>`;
+    els.quotaMeter.setAttribute(
+      "aria-label",
+      `${plan} 오늘 ${dailyLeft}/${dailyLimit} 이번달 ${monthLabel}`
+    );
+    els.quotaMeter.hidden = false;
+  }
+
+  function applyFontSize(size) {
+    const next = size === "sm" || size === "lg" ? size : "md";
+    document.documentElement.dataset.fontSize = next;
+    localStorage.setItem("autoblog_font_size", next);
+    document.querySelectorAll("[data-font]").forEach((btn) => {
+      btn.classList.toggle("is-on", btn.dataset.font === next);
+    });
+  }
+
+  function openSettings() {
+    if (!els.settingsLayer) return;
+    els.settingsLayer.hidden = false;
+    document.body.classList.add("settings-open");
+    els.key.focus();
+  }
+
+  function closeSettings() {
+    if (!els.settingsLayer) return;
+    els.settingsLayer.hidden = true;
+    document.body.classList.remove("settings-open");
   }
 
   function hideUsage() {
     els.usageCard.hidden = true;
+    renderHeaderQuota(null);
   }
 
   function renderUsage(data) {
@@ -154,19 +244,24 @@
         Math.max(0, (data.monthly_limit || 0) - (data.monthly_used || 0));
       els.usageMonthly.textContent = `${monthlyRem}건 (한도 ${data.monthly_limit}건)`;
     }
+    renderHeaderQuota(data);
   }
 
   function renderLegal(biz) {
-    const line = document.getElementById("legalLine");
-    if (!line || !biz) return;
-    const name = biz.operatorName || "ACROSSTOOL";
-    const method = biz.contactMethod || "카톡/문자";
-    const contact = biz.contact || "";
-    line.textContent = name;
-    const extra = line.nextElementSibling;
-    if (extra) {
-      extra.innerHTML = `<a href="/privacy">개인정보 처리방침</a> · 문의 ${method} ${contact}`.trim();
-    }
+    const name = biz?.operatorName || "ACROSSTOOL";
+    const method = biz?.contactMethod || "카톡/문자";
+    const contact = biz?.contact || "070-8065-1258";
+    const tel = String(contact).replace(/[^\d+]/g, "") || "07080651258";
+    const merchant =
+      biz?.merchantLine ||
+      "어크로스툴(ACROSSTOOL) · 대표 신일 · 163-13-03007 · 양양군 서면 쌍솔배기길31-1";
+    document.querySelectorAll(".legal-privacy-line").forEach((line) => {
+      line.innerHTML =
+        `${name} · <a href="/privacy">개인정보 처리방침</a> · 문의 ${method} <a href="tel:${tel}">${contact}</a>`;
+    });
+    document.querySelectorAll(".legal-merchant").forEach((line) => {
+      line.textContent = merchant;
+    });
   }
 
   function renderBank(biz) {
@@ -219,9 +314,23 @@
   els.bizType.addEventListener("change", onBizTypeChange);
   onBizTypeChange();
 
+  applyFontSize(localStorage.getItem("autoblog_font_size") || "md");
+  document.querySelectorAll("[data-font]").forEach((btn) => {
+    btn.addEventListener("click", () => applyFontSize(btn.dataset.font));
+  });
+  document.getElementById("settingsBtn")?.addEventListener("click", openSettings);
+  document.getElementById("openSettingsLink")?.addEventListener("click", openSettings);
+  document.getElementById("settingsClose")?.addEventListener("click", closeSettings);
+  document.getElementById("settingsBackdrop")?.addEventListener("click", closeSettings);
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && els.settingsLayer && !els.settingsLayer.hidden) closeSettings();
+  });
+
   els.bankToggle.addEventListener("click", () => {
     els.bankNotice.hidden = !els.bankNotice.hidden;
-    els.bankToggle.classList.toggle("open", !els.bankNotice.hidden);
+    const open = !els.bankNotice.hidden;
+    els.bankToggle.classList.toggle("open", open);
+    els.bankToggle.setAttribute("aria-expanded", open ? "true" : "false");
   });
 
   async function api(path, body) {
@@ -520,7 +629,8 @@
     ev.preventDefault();
     if (generating) return;
     if (!isValid || !licenseKey) {
-      showError(els.genError, "먼저 라이선스 키를 등록해 주세요.");
+      showError(els.licenseError, "먼저 라이선스 키를 등록해 주세요.");
+      openSettings();
       return;
     }
     const body = collectGenerateBody();
